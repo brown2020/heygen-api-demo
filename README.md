@@ -10,7 +10,7 @@ This is a demo application built with [Next.js 14](https://nextjs.org/), [Fireba
 - **Heygen API Integration**: Generate videos with AI avatars and talking photos.
 - **Server Actions**: Utilize Next.js server actions for secure API calls.
 - **Real-Time Feedback**: Display status and error messages during the video generation process.
-- **Polling and Webhooks**: Implement both polling and webhook strategies for video generation status updates.
+- **Polling for Status Updates**: Uses a polling mechanism to check the status of video generation, with the option to implement webhooks for more efficient updates.
 - **UI Components**: Customizable and responsive UI components with Tailwind CSS.
 
 ## Getting Started
@@ -151,12 +151,12 @@ The application uses [Zustand](https://github.com/pmndrs/zustand) to manage loca
 3. **Retrieve Video and Save to Firebase**:
    Polls the Heygen API to check the status of the video rendering, downloads it upon completion, uploads it to Firebase Storage, and stores the metadata in Firestore.
 
-### Polling and Webhooks
+### Polling for Status Updates
 
-The application uses both polling and webhook methods to manage the status of video generation:
+The application currently uses a polling mechanism to check the status of video generation:
 
-- **Polling**: Periodically checks the status of video rendering by sending requests to the Heygen API until the process is complete.
-- **Webhooks**: The app can be configured to receive webhook notifications from the Heygen API, providing real-time updates when the video generation is completed. This is more efficient than polling and is recommended for production use.
+- **Polling**: Periodically sends requests to the Heygen API to check the status of video rendering until the process is complete. This approach works well for simple implementations or small-scale usage.
+- **Webhooks (Optional for Developers)**: Developers can replace polling with webhooks for more efficient real-time updates. By setting up webhooks, the Heygen API can automatically notify the application when the video generation is completed, reducing the need for continuous polling.
 
 ### Pages
 
