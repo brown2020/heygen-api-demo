@@ -10,6 +10,7 @@ This is a demo application built with [Next.js 14](https://nextjs.org/), [Fireba
 - **Heygen API Integration**: Generate videos with AI avatars and talking photos.
 - **Server Actions**: Utilize Next.js server actions for secure API calls.
 - **Real-Time Feedback**: Display status and error messages during the video generation process.
+- **Polling and Webhooks**: Implement both polling and webhook strategies for video generation status updates.
 - **UI Components**: Customizable and responsive UI components with Tailwind CSS.
 
 ## Getting Started
@@ -149,6 +150,13 @@ The application uses [Zustand](https://github.com/pmndrs/zustand) to manage loca
    Retrieves a list of available avatars from the Heygen API to be used for generating videos.
 3. **Retrieve Video and Save to Firebase**:
    Polls the Heygen API to check the status of the video rendering, downloads it upon completion, uploads it to Firebase Storage, and stores the metadata in Firestore.
+
+### Polling and Webhooks
+
+The application uses both polling and webhook methods to manage the status of video generation:
+
+- **Polling**: Periodically checks the status of video rendering by sending requests to the Heygen API until the process is complete.
+- **Webhooks**: The app can be configured to receive webhook notifications from the Heygen API, providing real-time updates when the video generation is completed. This is more efficient than polling and is recommended for production use.
 
 ### Pages
 
