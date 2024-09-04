@@ -144,7 +144,7 @@ The application uses [Zustand](https://github.com/pmndrs/zustand) to manage loca
 ### Server Actions
 
 1. **Generate Talking Photo Video**:
-   Utilizes Heygen API to generate videos based on user-selected avatars and scripts. It supports both pre-recorded audio and text-to-speech options.
+   Utilizes the Heygen API to generate videos based on user-selected avatars and scripts. It supports both pre-recorded audio and text-to-speech options.
 2. **Fetch Heygen Avatars**:
    Retrieves a list of available avatars from the Heygen API to be used for generating videos.
 3. **Retrieve Video and Save to Firebase**:
@@ -152,7 +152,23 @@ The application uses [Zustand](https://github.com/pmndrs/zustand) to manage loca
 
 ### Pages
 
-- **Generate Page**: The primary interface for generating videos using selected avatars and viewing previously generated videos.
+- **Avatars Page**:
+
+  - Allows users to browse, edit, and fetch avatars from the Heygen API.
+  - Displays a list of avatars stored in Firebase and provides options to filter by favorites or fetch new avatars.
+  - Users can mark avatars as favorites, view details, and fetch the latest avatars directly from the API.
+
+- **Generate Page**:
+
+  - The primary interface for generating videos using selected avatars.
+  - Allows users to input a script and choose from different voice settings (pre-recorded audio, text-to-speech, or silence).
+  - Displays status and error messages during the video generation process, and shows the generated video upon completion.
+  - Provides access to previously generated videos for review.
+
+- **Profile Page**:
+  - Allows users to enter their API keys for Heygen and ElevenLabs, view their profile details, and manage their account settings.
+  - Displays user authentication data, including email and display name, using Clerk.
+  - Integrates a payment page for purchasing additional credits for video generation.
 
 ## Deployment
 
