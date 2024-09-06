@@ -20,6 +20,7 @@ export default function Generate({}: Props) {
   const [itemDetails, setItemDetails] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [script, setScript] = useState<string>("");
+  const [audioUrl, setAudioUrl] = useState<string>("");
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -78,8 +79,8 @@ export default function Generate({}: Props) {
         profile.heygen_api_key || "",
         profile.selectedTalkingPhoto || "noTalkingPhotoId",
         voiceId,
-        script,
-        ""
+        script || undefined, // Use the script if provided
+        audioUrl || undefined // Use the audioUrl if provided
       );
 
       if (result && result.video_id) {
@@ -129,10 +130,17 @@ export default function Generate({}: Props) {
         <div className="flex flex-col gap-4 w-full">
           <TextareaAutosize
             minRows={3}
-            placeholder="Script"
+            placeholder="Script (optional)"
             value={script}
             onChange={(e) => setScript(e.target.value)}
             className="border rounded p-2 resize-none"
+          />
+          <input
+            type="text"
+            placeholder="Audio URL (optional)"
+            value={audioUrl}
+            onChange={(e) => setAudioUrl(e.target.value)}
+            className="border rounded p-2"
           />
           <button
             onClick={handleGenerate}

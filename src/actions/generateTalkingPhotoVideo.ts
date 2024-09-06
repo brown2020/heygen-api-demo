@@ -17,7 +17,12 @@ export async function generateTalkingPhotoVideo(
 ): Promise<GenerateVideoResponse | null> {
   auth().protect();
 
-  console.log("Starting generateTalkingPhotoVideo function");
+  console.log(
+    "Starting generateTalkingPhotoVideo function with apiKey, script, audioUrl:",
+    apiKey,
+    script,
+    audioUrl
+  );
 
   try {
     let voiceSettings;
@@ -62,7 +67,7 @@ export async function generateTalkingPhotoVideo(
             character: {
               type: "talking_photo",
               talking_photo_id: talkingPhotoId,
-              scale: 1.0,
+              scale: 1,
               talking_photo_style: "square",
               talking_style: "stable",
               expression: "happy",
@@ -70,7 +75,7 @@ export async function generateTalkingPhotoVideo(
             voice: voiceSettings,
             background: {
               type: "color",
-              value: "#00ff00", // Green background
+              value: "#000000", // Default to black background
             },
           },
         ],
@@ -80,7 +85,13 @@ export async function generateTalkingPhotoVideo(
 
     console.log("Axios config prepared:", JSON.stringify(config, null, 2));
 
+    // Send request to API
     const response = await axios.request(config);
+
+    console.log(
+      "Full API response received:",
+      JSON.stringify(response.data, null, 2)
+    );
 
     if (response.status === 429) {
       console.warn("API rate limit exceeded. Please try again later.");
@@ -90,11 +101,14 @@ export async function generateTalkingPhotoVideo(
       };
     }
 
-    console.log("API response received:", response.data);
+    console.log("API response data:", response.data);
 
     const videoId = response.data?.data?.video_id;
     if (!videoId) {
-      console.error("No video ID found in response data:", response.data);
+      console.error(
+        "No video ID found in response data:",
+        JSON.stringify(response.data, null, 2)
+      );
       return {
         video_id: "",
         error: "Failed to retrieve video ID. Please try again.",
@@ -104,15 +118,26 @@ export async function generateTalkingPhotoVideo(
     console.log("Video generation successful, video_id:", videoId);
     return { video_id: videoId };
   } catch (error: any) {
-    if (error.response?.status === 429) {
-      console.error("Rate limit exceeded. Informing the user.");
-      return {
-        video_id: "",
-        error: "Rate limit exceeded. Please try again later.",
-      };
+    if (error.response) {
+      console.error("Axios error response received:");
+      console.error("Status code:", error.response.status);
+      console.error(
+        "Response data:",
+        JSON.stringify(error.response.data, null, 2)
+      );
+      console.error(
+        "Headers:",
+        JSON.stringify(error.response.headers, null, 2)
+      );
+    } else if (error.request) {
+      console.error(
+        "No response received from API. Request made:",
+        error.request
+      );
+    } else {
+      console.error("Unexpected error occurred:", error.message);
     }
 
-    console.error("Error generating talking photo video:", error);
     return {
       video_id: "",
       error: "An error occurred while generating the video. Please try again.",
