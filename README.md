@@ -27,7 +27,7 @@ Make sure you have the following tools installed on your machine:
 1. **Clone the repository**:
 
    ```bash
-   git clone https://github.com/your-username/heygen-api-demo.git
+   git clone https://github.com/brown2020/heygen-api-demo.git
    cd heygen-api-demo
    ```
 
