@@ -1,6 +1,5 @@
 import Profile from "@/components/Profile";
 
-type Props = {};
-export default function AccountPage({}: Props) {
+export default function ProfilePage() {
   return <Profile />;
 }

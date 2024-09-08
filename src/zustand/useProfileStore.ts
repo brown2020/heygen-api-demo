@@ -29,6 +29,13 @@ const defaultProfile: ProfileType = {
   selectedTalkingPhoto: "",
 };
 
+interface AuthState {
+  authEmail?: string;
+  authDisplayName?: string;
+  authPhotoUrl?: string;
+  authEmailVerified?: boolean;
+}
+
 interface ProfileState {
   profile: ProfileType;
   fetchProfile: () => void;
@@ -39,7 +46,7 @@ interface ProfileState {
 
 const mergeProfileWithDefaults = (
   profile: Partial<ProfileType>,
-  authState: any
+  authState: AuthState
 ): ProfileType => ({
   ...defaultProfile,
   ...profile,
@@ -69,6 +76,7 @@ const useProfileStore = create<ProfileState>((set, get) => ({
           authEmail,
           authDisplayName,
           authPhotoUrl,
+          authEmailVerified,
         });
         console.log("Profile found:", newProfile);
       } else {

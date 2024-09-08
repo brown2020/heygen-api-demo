@@ -1,7 +1,6 @@
 import { useAuthStore } from "@/zustand/useAuthStore";
 
-type Props = {};
-export default function AuthDataDisplay({}: Props) {
+export default function AuthDataDisplay() {
   const uid = useAuthStore((s) => s.uid);
   const authEmail = useAuthStore((s) => s.authEmail);
 

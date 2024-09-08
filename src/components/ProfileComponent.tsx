@@ -4,8 +4,7 @@ import Link from "next/link";
 import useProfileStore from "@/zustand/useProfileStore";
 import { useEffect, useState } from "react";
 
-type Props = {};
-export default function ProfileComponent({}: Props) {
+export default function ProfileComponent() {
   const profile = useProfileStore((state) => state.profile);
   const updateProfile = useProfileStore((state) => state.updateProfile);
   const [heygenApiKey, setHeygenApiKey] = useState(profile.heygen_api_key);

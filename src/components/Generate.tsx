@@ -12,12 +12,15 @@ import { PulseLoader } from "react-spinners";
 import PreviousVideos from "@/components/PreviousVideos";
 import TextareaAutosize from "react-textarea-autosize";
 
-type Props = {};
+interface ItemDetails {
+  voiceId?: string;
+  // Add other properties if there are more fields in the document
+}
 
-export default function Generate({}: Props) {
+export default function Generate() {
   const router = useRouter();
   const profile = useProfileStore((state) => state.profile);
-  const [itemDetails, setItemDetails] = useState<any>(null);
+  const [itemDetails, setItemDetails] = useState<ItemDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [script, setScript] = useState<string>("");
   const [audioUrl, setAudioUrl] = useState<string>("");
@@ -40,7 +43,7 @@ export default function Generate({}: Props) {
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
-          const data = docSnap.data();
+          const data = docSnap.data() as ItemDetails; // Cast data to the correct type
           console.log("Document found:", data);
           setItemDetails(data);
         } else {

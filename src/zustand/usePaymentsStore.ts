@@ -27,7 +27,7 @@ interface PaymentsStoreState {
   checkIfPaymentProcessed: (paymentId: string) => Promise<PaymentType | null>;
 }
 
-export const usePaymentsStore = create<PaymentsStoreState>((set, get) => ({
+export const usePaymentsStore = create<PaymentsStoreState>((set) => ({
   payments: [],
   paymentsLoading: false,
   paymentsError: null,
@@ -55,9 +55,11 @@ export const usePaymentsStore = create<PaymentsStoreState>((set, get) => ({
       payments.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
 
       set({ payments, paymentsLoading: false });
-    } catch (error: any) {
-      console.error("Error fetching payments:", error);
-      set({ paymentsError: error.message, paymentsLoading: false });
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "An unknown error occurred";
+      console.error("Error fetching payments:", errorMessage);
+      set({ paymentsError: errorMessage, paymentsLoading: false });
     }
   },
 
@@ -113,9 +115,11 @@ export const usePaymentsStore = create<PaymentsStoreState>((set, get) => ({
       });
 
       toast.success("Payment added successfully.");
-    } catch (error: any) {
-      console.error("Error adding payment:", error);
-      set({ paymentsError: error.message, paymentsLoading: false });
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "An unknown error occurred";
+      console.error("Error adding payment:", errorMessage);
+      set({ paymentsError: errorMessage, paymentsLoading: false });
     }
   },
 

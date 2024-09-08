@@ -20,8 +20,8 @@ if (!getApps().length) {
     storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGEBUCKET,
   });
 }
-const adminBucket: any = admin.storage().bucket();
-const adminDb: any = admin.firestore();
-const adminAuth: any = admin.auth();
+const adminBucket = admin.storage().bucket();
+const adminDb = admin.firestore();
+const adminAuth = admin.auth();
 
 export { adminBucket, adminDb, adminAuth, admin };

@@ -8,10 +8,15 @@ interface PreviousVideosProps {
   talkingPhotoId: string;
 }
 
+interface Video {
+  video_url: string;
+  // Add other properties if there are more fields in the video object
+}
+
 export default function PreviousVideos({
   talkingPhotoId,
 }: PreviousVideosProps) {
-  const [videos, setVideos] = useState<any[]>([]);
+  const [videos, setVideos] = useState<Video[]>([]);
 
   useEffect(() => {
     if (!talkingPhotoId) return;
@@ -24,7 +29,7 @@ export default function PreviousVideos({
     const videosQuery = query(videosCollectionRef);
 
     const unsubscribe = onSnapshot(videosQuery, (snapshot) => {
-      const videosList = snapshot.docs.map((doc) => doc.data());
+      const videosList = snapshot.docs.map((doc) => doc.data() as Video); // Ensure TypeScript understands this as Video[]
       setVideos(videosList);
     });
 

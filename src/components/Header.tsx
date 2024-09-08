@@ -21,9 +21,8 @@ import { serverTimestamp, Timestamp } from "firebase/firestore";
 import Link from "next/link";
 import { useEffect } from "react";
 
-type Props = {};
-export default function Header({}: Props) {
-  const { getToken, userId, isSignedIn } = useAuth();
+export default function Header() {
+  const { getToken, isSignedIn } = useAuth();
   const { user } = useUser();
   const setAuthDetails = useAuthStore((state) => state.setAuthDetails);
   const clearAuthDetails = useAuthStore((state) => state.clearAuthDetails);

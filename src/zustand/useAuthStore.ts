@@ -47,7 +47,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   ...defaultAuthState,
 
   setAuthDetails: async (details: Partial<AuthState>) => {
-    const { setAuthDetails, clearAuthDetails, ...oldState } = get();
+    const { ...oldState } = get();
     const newState = { ...oldState, ...details };
     set(newState);
     await updateUserDetailsInFirestore(newState, get().uid);

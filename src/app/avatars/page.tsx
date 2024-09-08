@@ -1,6 +1,5 @@
 import Avatars from "@/components/Avatars";
 
-type Props = {};
-export default function AvatarsPage({}: Props) {
+export default function AvatarsPage() {
   return <Avatars />;
 }

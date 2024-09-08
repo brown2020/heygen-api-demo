@@ -117,25 +117,24 @@ export async function generateTalkingPhotoVideo(
 
     console.log("Video generation successful, video_id:", videoId);
     return { video_id: videoId };
-  } catch (error: any) {
-    if (error.response) {
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      // Handle Axios errors
       console.error("Axios error response received:");
-      console.error("Status code:", error.response.status);
+      console.error("Status code:", error.response?.status);
       console.error(
         "Response data:",
-        JSON.stringify(error.response.data, null, 2)
+        JSON.stringify(error.response?.data, null, 2)
       );
       console.error(
         "Headers:",
-        JSON.stringify(error.response.headers, null, 2)
+        JSON.stringify(error.response?.headers, null, 2)
       );
-    } else if (error.request) {
-      console.error(
-        "No response received from API. Request made:",
-        error.request
-      );
-    } else {
+    } else if (error instanceof Error) {
+      // Handle generic errors
       console.error("Unexpected error occurred:", error.message);
+    } else {
+      console.error("An unknown error occurred.");
     }
 
     return {

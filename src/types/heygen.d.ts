@@ -19,7 +19,7 @@ export interface TalkingPhoto {
 }
 
 export interface HeygenAvatarResponse {
-  error: any;
+  error: { message: string; code?: number } | string | null; // More specific type
   data: {
     avatars: Avatar[];
     talking_photos: TalkingPhoto[];

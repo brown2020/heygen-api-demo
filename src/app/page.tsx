@@ -1,6 +1,5 @@
 import Home from "@/components/Home";
 
-type Props = {};
-export default function HomePage({}: Props) {
+export default function HomePage() {
   return <Home />;
 }
