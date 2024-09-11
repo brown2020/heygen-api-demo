@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@clerk/nextjs": "^5.4.1",
+    "@clerk/nextjs": "^5.5.2",
     "@stripe/react-stripe-js": "^2.8.0",
     "axios": "^1.7.7",
     "firebase": "^10.13.1",
@@ -31,7 +31,7 @@
     "eslint": "^8",
     "eslint-config-next": "^14.2.9",
     "postcss": "^8.4.45",
-    "tailwindcss": "^3.4.1",
+    "tailwindcss": "^3.4.11",
     "typescript": "^5.6.2"
   }
 }
