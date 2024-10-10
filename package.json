@@ -14,14 +14,14 @@
     "axios": "^1.7.7",
     "firebase": "^10.13.2",
     "firebase-admin": "^12.5.0",
-    "lucide-react": "^0.446.0",
+    "lucide-react": "^0.451.0",
     "next": "^14.2.13",
     "react": "^18",
     "react-dom": "^18",
     "react-hot-toast": "^2.4.1",
     "react-spinners": "^0.14.1",
     "react-textarea-autosize": "^8.5.3",
-    "stripe": "^16.12.0",
+    "stripe": "^17.2.0",
     "zustand": "^4.5.5"
   },
   "devDependencies": {
