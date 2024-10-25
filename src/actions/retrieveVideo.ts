@@ -17,7 +17,7 @@ export async function retrieveVideo(
   talkingPhotoId: string,
   pollInterval: number = 1000
 ): Promise<RetrieveVideoResponse | null> {
-  auth().protect();
+  auth.protect();
   try {
     while (true) {
       const response = await axios.get(

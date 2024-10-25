@@ -7,7 +7,7 @@ import axios from "axios";
 export async function getHeygenAvatars(
   apiKey: string
 ): Promise<HeygenAvatarResponse | null> {
-  auth().protect();
+  auth.protect();
   try {
     const config = {
       method: "get",

@@ -15,7 +15,7 @@ export async function generateTalkingPhotoVideo(
   script?: string,
   audioUrl?: string
 ): Promise<GenerateVideoResponse | null> {
-  auth().protect();
+  auth.protect();
 
   console.log(
     "Starting generateTalkingPhotoVideo function with apiKey, script, audioUrl:",

@@ -2,13 +2,22 @@
 
 import PaymentSuccessPage from "@/components/PaymentSuccessPage";
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
-export default function PaymentSuccess() {
+function PaymentSuccessContent() {
   const searchParams = useSearchParams();
-  const payment_intent = searchParams.get("payment_intent") || "";
+  const paymentIntent = searchParams.get("payment_intent") || "";
 
   console.log("searchParams in calling page", searchParams);
+  console.log("payment_intent in calling page", paymentIntent);
 
-  console.log("payment_intent in calling page", payment_intent);
-  return <PaymentSuccessPage payment_intent={payment_intent} />;
+  return <PaymentSuccessPage payment_intent={paymentIntent} />;
+}
+
+export default function PaymentSuccess() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <PaymentSuccessContent />
+    </Suspense>
+  );
 }
