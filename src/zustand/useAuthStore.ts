@@ -47,10 +47,21 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   ...defaultAuthState,
 
   setAuthDetails: async (details: Partial<AuthState>) => {
-    const { ...oldState } = get();
-    const newState = { ...oldState, ...details };
-    set(newState);
-    await updateUserDetailsInFirestore(newState, get().uid);
+    set((state) => ({ ...state, ...details }));
+
+    const storeState = get();
+    // Use a flexible type for the accumulator to avoid strict type conflicts
+    const filteredState = Object.keys(defaultAuthState).reduce((obj, key) => {
+      const typedKey = key as keyof AuthState;
+      const value = storeState[typedKey];
+      if (value !== undefined && value !== null) {
+        // Exclude undefined and null values
+        obj[typedKey] = value;
+      }
+      return obj;
+    }, {} as Record<string, unknown>); // Use Record<string, unknown> to allow any key-value pair
+
+    await updateUserDetailsInFirestore(filteredState, storeState.uid);
   },
 
   clearAuthDetails: () => set({ ...defaultAuthState }),
