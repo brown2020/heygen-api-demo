@@ -62,6 +62,7 @@ export async function generateTalkingPhotoVideo(
         "Content-Type": "application/json",
       },
       data: {
+        test: false,
         video_inputs: [
           {
             character: {
