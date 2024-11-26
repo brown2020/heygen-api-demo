@@ -13,7 +13,7 @@
     "@stripe/react-stripe-js": "^3.0.0",
     "axios": "^1.7.7",
     "firebase": "^11.0.0",
-    "firebase-admin": "^12.5.0",
+    "firebase-admin": "^13.0.1",
     "lucide-react": "^0.461.0",
     "next": "^15.0.2",
     "react": "^18",
