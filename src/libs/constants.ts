@@ -3,7 +3,7 @@ import AudioList from './audio-list.json';
 export const VIDEO_COLLECTION = 'generated-videos';
 export const WEBHOOK_HISTORY_COLLECTION = 'webhook-history';
 export const ERROR_REPORT_COLLECTION = 'error-report';
-export const DOCUMENT_COLLECTION = 'didTalkingPhotos';
+export const DOCUMENT_COLLECTION = 'talkingPhotos';
 export const NOTIFICATION_COLLECTION = "notifications";
 
 export const AVATAR_TYPE_PERSONAL = 'personal';
