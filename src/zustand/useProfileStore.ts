@@ -2,6 +2,9 @@ import { create } from "zustand";
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { useAuthStore } from "./useAuthStore";
 import { db } from "@/firebase/firebaseClient";
+import { Voice } from "elevenlabs/api";
+import { getAudioList } from "@/actions/getAudioList";
+import toast from "react-hot-toast";
 
 export interface ProfileType {
   email: string;
@@ -42,6 +45,8 @@ interface ProfileState {
   updateProfile: (newProfile: Partial<ProfileType>) => Promise<void>;
   useCredits: (amount: number) => Promise<boolean>;
   addCredits: (amount: number) => Promise<void>;
+  voices: Voice[] | null;
+  fetchVoices: () => Promise<void>;
 }
 
 const mergeProfileWithDefaults = (
@@ -59,7 +64,7 @@ const mergeProfileWithDefaults = (
 
 const useProfileStore = create<ProfileState>((set, get) => ({
   profile: defaultProfile,
-
+  voices: null,
   fetchProfile: async () => {
     const { uid, authEmail, authDisplayName, authPhotoUrl, authEmailVerified } =
       useAuthStore.getState();
@@ -159,6 +164,29 @@ const useProfileStore = create<ProfileState>((set, get) => ({
       console.error("Error adding credits:", error);
     }
   },
+  fetchVoices: async () => {
+
+    // check key exist for voices
+    if (get().voices !== null) {
+      return;
+    }
+
+    // If not, then fetch audio list
+    const audioList = await getAudioList(get().profile.elevenlabs_api_key);
+    if ("error" in audioList && audioList.error) {
+      console.error("Error fetching audio list: ", audioList.error);
+      toast.error(audioList.error);
+      return;
+    }
+
+    if (audioList.status && Array.isArray(audioList.voices)) {
+      // set audio list in voices
+      set({ voices: audioList.voices });
+    } else {
+      set({ voices: null });
+    }
+
+  }
 }));
 
 export default useProfileStore;

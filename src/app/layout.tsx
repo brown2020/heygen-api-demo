@@ -20,7 +20,7 @@ export default function RootLayout({
       <html lang="en" className="h-full">
         <body className="flex flex-col h-full">
           <Header />
-          <div className="flex flex-col h-full flex-1 bg-slate-200 overflow-y-auto p-4">
+          <div className="flex flex-col h-full flex-1 bg-white overflow-y-auto p-4">
             {children}
           </div>
           <Toaster position="top-right" />

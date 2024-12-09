@@ -35,33 +35,23 @@ export default function ProfileComponent() {
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-col sm:flex-row px-5 py-3 gap-3 border border-gray-500 rounded-md">
-        <div className="flex gap-2 w-full items-center">
-          <div className="flex-1">
-            Conversation Credits: {Math.round(profile.credits)}
-          </div>
-          <Link
-            className="bg-blue-500 text-white px-3 py-2 rounded-md hover:opacity-50 flex-1 text-center"
-            href={"/payment-attempt"}
-          >
-            Buy 10,000 Credits
-          </Link>
-        </div>
-      </div>
-      <div className="flex flex-col px-5 py-3 gap-3 border border-gray-500 rounded-md">
-        <label htmlFor="heygen-api-key" className="text-sm font-medium">
-          HeyGen API Key:
+    <div className="flex flex-col p-5 border rounded-[10px] shadow-[rgba(50,_50,_105,_0.15)_0px_2px_5px_0px,_rgba(0,_0,_0,_0.05)_0px_1px_1px_0px]">
+    <div className="flex flex-col gap-5">
+      <div className="flex flex-col">
+        <label htmlFor="did-api-key" className="text-base font-light mb-[5px]">
+        HeyGen API Key:
         </label>
         <input
           type="text"
-          id="heygen-api-key"
+          id="did-api-key"
           value={heygenApiKey}
           onChange={(e) => setHeygenApiKey(e.target.value)}
-          className="border border-gray-300 rounded-md px-3 py-2 h-10"
-          placeholder="Enter your HeyGen API Key"
+          className="border bg-ghostWhite text-mediumGray rounded-md py-[10px] px-[15px] h-10 text-sm"
+          placeholder="Enter your Heygen API Key"
         />
-        <label htmlFor="elevenlabs-api-key" className="text-sm font-medium">
+      </div>
+      <div className="flex flex-col">
+        <label htmlFor="elevenlabs-api-key" className="text-base font-light mb-[5px]">
           ElevenLabs API Key:
         </label>
         <input
@@ -69,20 +59,21 @@ export default function ProfileComponent() {
           id="elevenlabs-api-key"
           value={elevenlabsApiKey}
           onChange={(e) => setElevenlabsApiKey(e.target.value)}
-          className="border border-gray-300 rounded-md px-3 py-2 h-10"
+          className="border bg-ghostWhite text-mediumGray rounded-md py-[10px] px-[15px] h-10 text-sm"
           placeholder="Enter your ElevenLabs API Key"
         />
-        <button
-          onClick={handleApiKeyChange}
-          disabled={
-            heygenApiKey === profile.heygen_api_key &&
-            elevenlabsApiKey === profile.elevenlabs_api_key
-          }
-          className="bg-blue-500 text-white px-3 py-2 rounded-md hover:opacity-50 disabled:opacity-50"
-        >
-          Update API Keys
-        </button>
       </div>
+      <button
+        onClick={handleApiKeyChange}
+        disabled={
+          heygenApiKey === profile.heygen_api_key &&
+          elevenlabsApiKey === profile.elevenlabs_api_key
+        }
+        className="bg-blue-500 text-white px-3 py-2 rounded-md hover:opacity-50 disabled:opacity-50"
+      >
+        Update API Keys
+      </button>
     </div>
+  </div>
   );
 }

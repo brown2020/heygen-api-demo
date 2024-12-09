@@ -16,7 +16,7 @@ export default function PaymentsPage() {
   }, [uid, fetchPayments]);
 
   return (
-    <div className="flex flex-col h-full w-full max-w-4xl mx-auto gap-4">
+    <div className="flex flex-col h-full w-full max-w-4xl mx-auto gap-4 mt-[40px]">
       <div className="text-3xl font-bold">Payments</div>
 
       {paymentsLoading && <div>Loading payments...</div>}

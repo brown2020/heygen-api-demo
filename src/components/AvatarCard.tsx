@@ -5,9 +5,13 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/firebase/firebaseClient";
 import { HeartIcon } from "lucide-react";
 import useProfileStore from "@/zustand/useProfileStore";
+import { TalkingPhoto } from "@/types/heygen";
 
 interface AvatarCardProps {
   id: string;
+  avatar?: TalkingPhoto;
+  edit?: () => void
+
 }
 
 export default function AvatarCard({ id }: AvatarCardProps) {
