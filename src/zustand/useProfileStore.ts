@@ -17,6 +17,7 @@ export interface ProfileType {
   elevenlabs_api_key: string;
   selectedAvatar: string;
   selectedTalkingPhoto: string;
+  did_api_key?: string;
 }
 
 const defaultProfile: ProfileType = {

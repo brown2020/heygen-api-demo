@@ -1,11 +1,11 @@
 import React from 'react';
 import Image from 'next/image';
-import { DIDTalkingPhoto } from '@/types/did';
+import { TalkingPhoto } from '@/types/heygen';
 
 interface AvatarGalleryProps {
-  selectedAvatar: DIDTalkingPhoto | null;
-  personalTalkingPhotos: DIDTalkingPhoto[];
-  handleChangeAvatar: (avatar: DIDTalkingPhoto) => void;
+  selectedAvatar: TalkingPhoto | null;
+  personalTalkingPhotos: TalkingPhoto[];
+  handleChangeAvatar: (avatar: TalkingPhoto) => void;
 }
 
 const AvatarGallery: React.FC<AvatarGalleryProps> = ({ personalTalkingPhotos, handleChangeAvatar}) => {

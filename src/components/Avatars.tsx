@@ -1,13 +1,14 @@
 "use client";
 
 import { Fragment, useEffect, useState } from "react";
-import { getHeygenAvatars } from "@/actions/getHeygenAvatars";
-import useProfileStore from "@/zustand/useProfileStore";
+// import { getHeygenAvatars } from "@/actions/getHeygenAvatars";
+// import useProfileStore from "@/zustand/useProfileStore";
 import AvatarCard from "./AvatarCard";
 import { AvatarValues, TalkingPhoto } from "@/types/heygen";
-import { ClipLoader } from "react-spinners";
+// import { ClipLoader } from "react-spinners";
 import { db } from "@/firebase/firebaseClient";
-import { collection, onSnapshot, setDoc, doc, query, where } from "firebase/firestore";
+// import { collection, onSnapshot, setDoc, doc, query, where } from "firebase/firestore";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { Plus } from "lucide-react";
 import { useAuthStore } from "@/zustand/useAuthStore";
 import { AVATAR_TYPE_PERSONAL, DOCUMENT_COLLECTION } from "@/libs/constants";
@@ -23,9 +24,9 @@ export default function Avatars() {
   const [selectedAvatar, setSelectedAvatar] = useState<TalkingPhoto | null>(null);
   const uid = useAuthStore((state) => state.uid);
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const profile = useProfileStore((state) => state.profile);
+  // const [isLoading, setIsLoading] = useState(false);
+  // const [error, setError] = useState<string | null>(null);
+  // const profile = useProfileStore((state) => state.profile);
 
   const showNotification = (message: string) => {
     toast.success(message, {
@@ -87,31 +88,31 @@ export default function Avatars() {
     setSelectedAvatar(avatar);
     setShowModel(true);
   }
-  const fetchTalkingPhotos = async () => {
-    setIsLoading(true);
-    setError(null);
+  // const fetchTalkingPhotos = async () => {
+  //   setIsLoading(true);
+  //   setError(null);
 
-    if (!profile.heygen_api_key) {
-      setError("API key is missing");
-      setIsLoading(false);
-      return;
-    }
+  //   if (!profile.heygen_api_key) {
+  //     setError("API key is missing");
+  //     setIsLoading(false);
+  //     return;
+  //   }
 
-    const result = await getHeygenAvatars(profile.heygen_api_key);
-    if (result && result.data) {
-      const personalTalkingPhotos = result.data.talking_photos;
-      const talkingPhotosCollection = collection(db, "personalTalkingPhotos");
+  //   const result = await getHeygenAvatars(profile.heygen_api_key);
+  //   if (result && result.data) {
+  //     const personalTalkingPhotos = result.data.talking_photos;
+  //     const talkingPhotosCollection = collection(db, "personalTalkingPhotos");
 
-      personalTalkingPhotos.forEach(async (photo) => {
-        const docRef = doc(talkingPhotosCollection, photo.talking_photo_id);
-        await setDoc(docRef, photo, { merge: true });
-      });
-    } else {
-      setError("Failed to fetch talking photos");
-    }
+  //     personalTalkingPhotos.forEach(async (photo) => {
+  //       const docRef = doc(talkingPhotosCollection, photo.talking_photo_id);
+  //       await setDoc(docRef, photo, { merge: true });
+  //     });
+  //   } else {
+  //     setError("Failed to fetch talking photos");
+  //   }
 
-    setIsLoading(false);
-  };
+  //   setIsLoading(false);
+  // };
 
   const filteredTalkingPhotos = showFavorites
     ? personalTalkingPhotos.filter((p) => p.favorite)

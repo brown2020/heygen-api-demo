@@ -5,7 +5,7 @@ import { Popover, PopoverTrigger, PopoverContent } from '@nextui-org/popover';
 import { AlignJustify, ArrowDown, Bell } from "lucide-react";
 import { useAuthStore } from "@/zustand/useAuthStore";
 import { useInitializeStores } from "@/zustand/useInitializeStores";
-import useProfileStore from "@/zustand/useProfileStore";
+// import useProfileStore from "@/zustand/useProfileStore";
 import {
   SignedIn,
   SignedOut,
@@ -32,13 +32,14 @@ export default function Header() {
   const { getToken, isSignedIn } = useAuth();
   const { user } = useUser();
   const setAuthDetails = useAuthStore((state) => state.setAuthDetails);
-  const [notifications, setNotifications] = useState<NotificationDetail[]>([]);
-  const [processing, setProcessing] = useState(false);
+  const processing: boolean = false;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const clearAuthDetails = useAuthStore((state) => state.clearAuthDetails);
-  const profile = useProfileStore((state) => state.profile);
+  // const profile = useProfileStore((state) => state.profile);
   const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
 
+  const notifications : NotificationDetail[] = ([]);
+  
   useInitializeStores();
 
   const router = useRouter();

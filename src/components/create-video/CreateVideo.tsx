@@ -763,14 +763,14 @@ export default function CreateVideo({ video_id }: { video_id: string | null }) {
                         const baseUrl = getApiBaseUrl() ?? window.location.origin;
                         const response = await generateVideo(
                             videoIdRef.current,
-                            profile.did_api_key, 
+                            profile.did_api_key ?? null,
                             baseUrl,
                             thumbnailUrl,
                             writeScriptForm.getValues('script'),
-                            selectedAvatar.voiceId, 
-                            undefined, 
-                            profile.elevenlabs_api_key, 
-                            selectAvatarForm.getValues('emotion'), 
+                            selectedAvatar.voiceId,
+                            undefined,
+                            profile.elevenlabs_api_key,
+                            selectAvatarForm.getValues('emotion'),
                             selectAvatarForm.getValues('movement'),
                         )
 

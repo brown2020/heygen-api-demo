@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import useProfileStore from "@/zustand/useProfileStore";
 import { useEffect, useState } from "react";
 

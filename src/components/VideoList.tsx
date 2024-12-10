@@ -10,6 +10,8 @@ import { AVATAR_TYPE_PERSONAL, VIDEO_COLLECTION } from "@/libs/constants";
 import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { Loader } from "./Loader";
+import {VideoDetail as VideoDetailType } from "@/types/heygen";
+import VideoDetail from "./video-show/VideoDetail";
 
 export default function VideosPage() {
 
@@ -22,10 +24,14 @@ export default function VideosPage() {
     const [isModalOpen, setModalOpen] = useState<boolean>(false);
     const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
 
+    const [videoID, setVideoID] = useState<string | null>(null);
+
+    // const profile = useProfileStore((state) => state.profile);
+
     console.log("uid", uid);
 
     useEffect(() => {
-        if(!uid) return;
+        if (!uid) return;
         setFetching(true);
         const videoCollection = query(
             collection(db, VIDEO_COLLECTION),
@@ -64,6 +70,18 @@ export default function VideosPage() {
         setModalOpen(true);
     }
 
+    function showVideo(video: VideoDetailType) {
+        if (video.d_id_status) {
+            setVideoID(video.id);
+        } else {
+            router.push(`/videos/${video.id}/edit`)
+        }
+    }
+
+    function closeVideoModel () {
+        setVideoID(null);
+    }
+
     return (
         <>
             <ConfirmationModal
@@ -72,8 +90,9 @@ export default function VideosPage() {
                 onConfirm={() => selectedVideoId && videoDeleteHandler(selectedVideoId)}
             />
             {
-                fetching ? <Loader /> :
+                fetching ? <><Loader /></> :
                     <div className="p-4 h-full">
+                        { videoID && ( <VideoDetail id={videoID} closeVideoModel={closeVideoModel} /> )}
                         {
                             videoList.length > 0 ?
                                 (
@@ -83,7 +102,7 @@ export default function VideosPage() {
                                             {
                                                 videoList.map((video, index) => {
                                                     return (
-                                                        <div onClick={() => router.push(video.d_id_status ? `/videos/${video.id}/show` : `/videos/${video.id}/edit`)} key={index} className="col-span-3 cursor-pointer group/video relative border-1 p-4 hover:bg-black border-gray-300 hover:drop-shadow-2xl rounded-xl overflow-hidden hover:-translate-y-2 transition-all duration-300">
+                                                        <div onClick={() => showVideo(video as VideoDetailType)} key={index} className="col-span-3 cursor-pointer group/video relative border-1 p-4 hover:bg-black border-gray-300 hover:drop-shadow-2xl rounded-xl overflow-hidden hover:-translate-y-2 transition-all duration-300">
                                                             <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/0 transition-all duration-300 hover:via-gray-900/1"></div>
                                                             <div className="h-36"></div>
                                                             {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuthStore } from "@/zustand/useAuthStore";
-import { SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
+import { SignedIn, SignedOut } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
 import Footer from "./Footer";

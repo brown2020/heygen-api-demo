@@ -1,10 +1,11 @@
-import { useState, useEffect, Fragment } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import {  useEffect, Fragment } from "react";
+// import { useState, useEffect, Fragment } from "react";
+// import { useRouter, usePathname } from "next/navigation";
+// import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/firebase/firebaseClient";
-import { HeartIcon, Pencil } from "lucide-react";
-import useProfileStore from "@/zustand/useProfileStore";
+import { Pencil } from "lucide-react";
 import { TalkingPhoto } from "@/types/heygen";
 import { useAuthStore } from "@/zustand/useAuthStore";
 import toast from "react-hot-toast";
@@ -18,21 +19,21 @@ interface AvatarCardProps {
 }
 
 export default function AvatarCard({ id, avatar, edit }: AvatarCardProps) {
-  const [favorite, setFavorite] = useState(false);
-  const [talkingPhotoName, setTalkingPhotoName] = useState("");
-  const [project, setProject] = useState("");
-  const [voiceId, setVoiceId] = useState("");
-  const [previewImageUrl, setPreviewImageUrl] = useState("");
-  const [isDirty, setIsDirty] = useState(false);
+  // const [favorite, setFavorite] = useState(false);
+  // const [talkingPhotoName, setTalkingPhotoName] = useState("");
+  // const [project, setProject] = useState("");
+  // const [voiceId, setVoiceId] = useState("");
+  // const [previewImageUrl, setPreviewImageUrl] = useState("");
+  // const [isDirty, setIsDirty] = useState(false);
 
-  const { selectedTalkingPhoto } = useProfileStore((state) => state.profile);
-  const updateProfile = useProfileStore((state) => state.updateProfile);
-  const isSelected = selectedTalkingPhoto === id;
+  // const { selectedTalkingPhoto } = useProfileStore((state) => state.profile);
+  // const updateProfile = useProfileStore((state) => state.updateProfile);
+  // const isSelected = selectedTalkingPhoto === id;
 
   const uid = useAuthStore((state) => state.uid);
-  const router = useRouter();
-  const pathname = usePathname();
-  const isOnGeneratePage = pathname === "/generate";
+  // const router = useRouter();
+  // const pathname = usePathname();
+  // const isOnGeneratePage = pathname === "/generate";
 
   useEffect(() => {
     const fetchData = async () => {
@@ -40,12 +41,12 @@ export default function AvatarCard({ id, avatar, edit }: AvatarCardProps) {
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
-        const data = docSnap.data();
-        setFavorite(data.favorite || false);
-        setTalkingPhotoName(data.talking_photo_name || "");
-        setProject(data.project || "");
-        setVoiceId(data.voiceId || "");
-        setPreviewImageUrl(data.preview_image_url || "");
+        // const data = docSnap.data();
+        // setFavorite(data.favorite || false);
+        // setTalkingPhotoName(data.talking_photo_name || "");
+        // setProject(data.project || "");
+        // setVoiceId(data.voiceId || "");
+        // setPreviewImageUrl(data.preview_image_url || "");
       }
     };
 
@@ -91,30 +92,30 @@ export default function AvatarCard({ id, avatar, edit }: AvatarCardProps) {
     )
   };
 
-  const handleInputChange =
-    (setter: React.Dispatch<React.SetStateAction<string>>) =>
-      (e: React.ChangeEvent<HTMLInputElement>) => {
-        setter(e.target.value);
-        setIsDirty(true);
-      };
+  // const handleInputChange =
+  //   (setter: React.Dispatch<React.SetStateAction<string>>) =>
+  //     (e: React.ChangeEvent<HTMLInputElement>) => {
+  //       setter(e.target.value);
+  //       // setIsDirty(true);
+  //     };
 
-  const saveDetails = async () => {
-    const docRef = doc(db, DOCUMENT_COLLECTION, id);
-    await setDoc(
-      docRef,
-      { talking_photo_name: talkingPhotoName, project, voiceId },
-      { merge: true }
-    );
-    setIsDirty(false);
-  };
+  // const saveDetails = async () => {
+  //   const docRef = doc(db, DOCUMENT_COLLECTION, id);
+  //   await setDoc(
+  //     docRef,
+  //     { talking_photo_name: talkingPhotoName, project, voiceId },
+  //     { merge: true }
+  //   );
+  //   // setIsDirty(false);
+  // };
 
-  const selectTalkingPhoto = async () => {
-    if (!isSelected) {
-      updateProfile({ selectedTalkingPhoto: id });
-    } else {
-      router.push("/generate"); // Navigate to /generate if already selected
-    }
-  };
+  // const selectTalkingPhoto = async () => {
+  //   if (!isSelected) {
+  //     updateProfile({ selectedTalkingPhoto: id });
+  //   } else {
+  //     router.push("/generate"); // Navigate to /generate if already selected
+  //   }
+  // };
 
   return (
     <article className="group/avatar relative border-transparent border-2 hover:border-gray-300 hover:drop-shadow-2xl transition-all hover:-translate-y-2 ease-in-out duration-300 isolate flex flex-col justify-end overflow-hidden rounded-2xl px-8 pb-8 pt-40 lg:pt-40 xl:pt-44 2xl:pt-52 mx-auto w-full">

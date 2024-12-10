@@ -80,6 +80,7 @@ extends FabricImage<Partial<fabric.ImageProps>, fabric.SerializedImageProps, fab
   is_avatar?: boolean; // Add a custom `id` property
 }
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 type CanvasObjects = any[];
 type CanvasObject = {
   objects: CanvasObjects;
