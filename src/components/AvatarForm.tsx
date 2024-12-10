@@ -244,7 +244,7 @@ export default function AvatarForm({ submit, create, avatarDetail }: {
 
     return <div className="h-screen w-full p-4">
         <div className="h-full w-full flex justify-center flex-col items-center">
-            <div className="w-[700px] max-sm:w-full my-[3px] overflow-auto max-sm:mx-5 mx-auto bg-white transform px-4 pb-4 pt-5 sm:p-4 sm:pb-4 rounded-lg shadow-xl transition-all sm:my-8">
+            <div className="w-[700px] max-sm:w-full my-[3px] max-sm:mx-5 mx-auto bg-white transform px-4 pb-4 pt-5 sm:p-4 sm:pb-4 rounded-lg shadow-xl transition-all sm:my-8">
                 <div className="flex xs:gap-5 max-xs:flex-col h-full w-full">
                     <div className="h-full relative max-xs:w-full w-2/4">
                         <div className="relative h-full min-h-56 w-full bg-white rounded-md border border-dashed border-gray-400">
@@ -362,14 +362,14 @@ export default function AvatarForm({ submit, create, avatarDetail }: {
                                     </div>
                                 </div>
                                 <div className="bg-gray-50 flex justify-between w-full gap-2 mt-5">
-                                    <button disabled={processing} onClick={cancelEdit} type="button" className="disabled:cursor-not-allowed disabled:opacity-50 w-full justify-center rounded-md bg-white py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                                        Cancel
-                                    </button>
                                     {!create &&
                                         <button disabled={processing} onClick={deleteAvatar} type="button" className="disabled:cursor-not-allowed disabled:opacity-50 bg-red-600 w-full justify-center rounded-md  py-2 text-sm font-semibold shadow-sm ring-1 ring-inset ring-gray-300 text-white hover:bg-red-400">
                                             Delete
                                         </button>
                                     }
+                                    <button disabled={processing} onClick={cancelEdit} type="button" className="disabled:cursor-not-allowed disabled:opacity-50 w-full justify-center rounded-md bg-white py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                                        Cancel
+                                    </button>
                                     <button type="submit" disabled={processing} className="disabled:cursor-not-allowed disabled:opacity-50 w-full rounded-md bg-sky-600 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-500">
                                         {create ? 'Add' : 'Update'}
                                     </button>
