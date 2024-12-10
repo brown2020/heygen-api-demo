@@ -10,11 +10,7 @@ export const metadata: Metadata = {
   description: "Heygen API Demo: A simple demo for Heygen API",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({children}: Readonly<{ children: React.ReactNode; }>) {
   return (
     <ClerkProvider dynamic>
       <html lang="en" className="h-full">

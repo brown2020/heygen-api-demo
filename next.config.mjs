@@ -23,6 +23,12 @@ const nextConfig = {
       },
       {
         protocol: "https",
+        hostname: "d-id-api-demo.vercel.app",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
         hostname: "img.clerk.com",
         port: "",
         pathname: "/**",
