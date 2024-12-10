@@ -3,7 +3,7 @@ import { getFileUrl } from "@/actions/getFileUrl";
 import { db, storage } from "@/firebase/firebaseClient";
 import { AVATAR_TYPE_PERSONAL, DEFAULT_AUDIO, DOCUMENT_COLLECTION } from "@/libs/constants";
 // import { AvatarValues, Tack } from "@/types/did";
-import { TalkingPhoto , AvatarValues } from "@/types/heygen";
+import { TalkingPhoto, AvatarValues } from "@/types/heygen";
 import { resizeImage } from "@/utils/resizeImage";
 import { useAuthStore } from "@/zustand/useAuthStore";
 import { ErrorMessage } from "@hookform/error-message";
@@ -242,56 +242,54 @@ export default function AvatarForm({ submit, create, avatarDetail }: {
 
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-    return <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-        <div className="relative transform px-4 pb-4 pt-5 sm:p-4 sm:pb-4 rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-xl">
-            <div className="grid grid-cols-3">
-                <div className="relative">
-                    <div className="relative h-full w-full bg-white rounded-md border border-dashed border-gray-400">
-                        <div className={`${!previewImageUrl && 'hidden'}`}
-                            onDragOver={handleDragOver}
-                            onDragLeave={handleDragLeave}
-                            onDrop={handleDrop}
-                        >
-                            {/* {previewImageUrl} */}
-                            {previewImageUrl && <Image
-                                src={previewImageUrl}
-                                alt="Avatar Image"
-                                width={512}
-                                height={512}
-                                className="absolute inset-0 h-full w-full object-cover"
-                            />}
-                            <button onClick={() => { if (fileInputRef.current) fileInputRef.current.click() }} className="absolute bg-white text-gray-500 p-2 rounded-full bottom-3 right-3 shadow-lg">
-                                <ImageIcon size={20} />
-                            </button>
-                        </div>
-                        <label onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop} className={`flex text-center p-2 h-full ${previewImageUrl && 'hidden'}`} htmlFor="avatar_image">
-                            <input ref={fileInputRef} onChange={handleImageUpload} type="file" id="avatar_image" name="avatar_image" className="hidden" />
-                            <div className="self-center">
-                                <ImageIcon size={45} className="text-gray-500 m-auto" />
-                                <p className="text-xs">Drop your image here, or Browse</p>
+    return <div className="h-screen w-full p-4">
+        <div className="h-full w-full flex justify-center flex-col items-center">
+            <div className="w-[700px] max-sm:w-full my-[3px] overflow-auto max-sm:mx-5 mx-auto bg-white transform px-4 pb-4 pt-5 sm:p-4 sm:pb-4 rounded-lg shadow-xl transition-all sm:my-8">
+                <div className="flex xs:gap-5 max-xs:flex-col h-full w-full">
+                    <div className="h-full relative max-xs:w-full w-2/4">
+                        <div className="relative h-full min-h-56 w-full bg-white rounded-md border border-dashed border-gray-400">
+                            <div className={`${!previewImageUrl && 'hidden'}`}
+                                onDragOver={handleDragOver}
+                                onDragLeave={handleDragLeave}
+                                onDrop={handleDrop}
+                            >
+                                {/* {previewImageUrl} */}
+                                {previewImageUrl && <Image
+                                    src={previewImageUrl}
+                                    alt="Avatar Image"
+                                    width={512}
+                                    height={512}
+                                    className="absolute inset-0 h-full w-full object-cover"
+                                />}
+                                <button onClick={() => { if (fileInputRef.current) fileInputRef.current.click() }} className="absolute bg-white text-gray-500 p-2 rounded-full bottom-3 right-3 shadow-lg">
+                                    <ImageIcon size={20} />
+                                </button>
                             </div>
-                        </label>
+                            <label onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop} className={`flex text-center p-2 h-full ${previewImageUrl && 'hidden'}`} htmlFor="avatar_image">
+                                <input ref={fileInputRef} onChange={handleImageUpload} type="file" id="avatar_image" name="avatar_image" className="hidden" />
+                                <div className="self-center">
+                                    <ImageIcon size={45} className="text-gray-500 m-auto" />
+                                    <p className="text-xs">Drop your image here, or Browse</p>
+                                </div>
+                            </label>
+                        </div>
+                        {loading &&
+                            <div className="backdrop-blur-sm absolute border top-0 h-full w-full rounded-md border-dashed border-gray-400 z-20 flex items-center justify-center">
+                                <div className="w-12 h-12 rounded-full animate-spin border-2 border-white border-dashed border-t-transparent"></div>
+                            </div>
+                        }
+                        {dragging &&
+                            <div className="bg-black opacity-40 absolute border top-0 h-full w-full rounded-md border-dashed border-gray-400 z-20 flex items-center justify-center">
+                            </div>
+                        }
                     </div>
-                    {loading &&
-                        <div className="backdrop-blur-sm absolute border top-0 h-full w-full rounded-md border-dashed border-gray-400 z-20 flex items-center justify-center">
-                            <div className="w-12 h-12 rounded-full animate-spin
-                    border-2 border-white border-dashed border-t-transparent"></div>
-                        </div>
-                    }
-                    {dragging &&
-                        <div className="bg-black opacity-40 absolute border top-0 h-full w-full rounded-md border-dashed border-gray-400 z-20 flex items-center justify-center">
-                        </div>
-                    }
-                </div>
-                <div className="col-span-2">
-                    <form onSubmit={onSubmit}>
-                        <div className="bg-white">
-                            <div className="sm:flex sm:items-start">
-
-                                <div className="mt-3 w-full text-center sm:ml-4 sm:mt-0 sm:text-left">
-                                    <h3 className="text-xl font-semibold leading-6 text-gray-900" id="modal-title">{create ? 'Create' : 'Edit'} Avatar</h3>
-                                    <div className="w-full mt-4 mb-5">
-                                        <label className="block mb-2 text-sm text-slate-600">
+                    <div className="h-full w-full">
+                        <form onSubmit={onSubmit} className="w-full h-full">
+                            <div className="bg-white w-full h-full">
+                                <div>
+                                    <h3 className="text-xl max-xs:hidden font-semibold leading-6 text-gray-900" id="modal-title">{create ? 'Create' : 'Edit'} Avatar</h3>
+                                    <div className="w-full xs:mt-4 max-xs:mt-2 xs:mb-5 max-xs:mb-2">
+                                        <label className="block xs:mb-2 font-medium max-xs:mb-1 text-sm text-slate-600">
                                             Avatar Name
                                         </label>
                                         <Controller
@@ -308,32 +306,28 @@ export default function AvatarForm({ submit, create, avatarDetail }: {
                                         />
                                         <p className="text-red-500 text-sm"><ErrorMessage errors={formState.errors} name="name" /></p>
                                     </div>
-
-                                    <div className="w-full mt-4 mb-5">
-                                        <div className="flex flex-col gap-2">
-                                            <label className="block text-sm font-medium text-slate-600">
-                                                Audio
-                                            </label>
-                                            <div className="flex gap-4">
-                                                <div className="flex-1 mb-2">
-                                                    <Select
-                                                        value={selectedGender}
-                                                        onChange={(e) => customGenderFilterOption(e as { value: string; label: string })}
-                                                        options={genderOptions}
-                                                        placeholder="Select Gender"
-                                                    />
-                                                </div>
-                                                <div className="flex-1">
-                                                    <Select
-                                                        value={selectedCountry}
-                                                        onChange={(e) => customCountryFilterOption(e as { value: string; label: string })}
-                                                        options={countryOptions}
-                                                        placeholder="Select Language"
-                                                    />
-                                                </div>
+                                    <div className="flex flex-col gap-2 max-xs:gap-1">
+                                        <label className="block text-sm font-medium text-slate-600">
+                                            Audio
+                                        </label>
+                                        <div className="flex gap-4">
+                                            <div className="flex-1 xs:mb-2">
+                                                <Select
+                                                    value={selectedGender}
+                                                    onChange={(e) => customGenderFilterOption(e as { value: string; label: string })}
+                                                    options={genderOptions}
+                                                    placeholder="Select Gender"
+                                                />
+                                            </div>
+                                            <div className="flex-1">
+                                                <Select
+                                                    value={selectedCountry}
+                                                    onChange={(e) => customCountryFilterOption(e as { value: string; label: string })}
+                                                    options={countryOptions}
+                                                    placeholder="Select Language"
+                                                />
                                             </div>
                                         </div>
-
                                         <Controller
                                             control={control}
                                             name="voiceId"
@@ -360,29 +354,29 @@ export default function AvatarForm({ submit, create, avatarDetail }: {
 
                                         {
                                             voiceDetail ?
-                                                <audio controls key={voiceDetail.voice_id} className="mt-2">
+                                                <audio controls key={voiceDetail.voice_id} className="xs:mt-2 max-xs:w-full bg-gray-100 rounded-full shadow-lg">
                                                     <source src={voiceDetail.preview_url} type="audio/mpeg" />
                                                     Your browser does not support the audio element.
                                                 </audio> : <Fragment />
                                         }
                                     </div>
                                 </div>
+                                <div className="bg-gray-50 flex justify-between w-full gap-2 mt-5">
+                                    <button disabled={processing} onClick={cancelEdit} type="button" className="disabled:cursor-not-allowed disabled:opacity-50 w-full justify-center rounded-md bg-white py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                                        Cancel
+                                    </button>
+                                    {!create &&
+                                        <button disabled={processing} onClick={deleteAvatar} type="button" className="disabled:cursor-not-allowed disabled:opacity-50 bg-red-600 w-full justify-center rounded-md  py-2 text-sm font-semibold shadow-sm ring-1 ring-inset ring-gray-300 text-white hover:bg-red-400">
+                                            Delete
+                                        </button>
+                                    }
+                                    <button type="submit" disabled={processing} className="disabled:cursor-not-allowed disabled:opacity-50 w-full rounded-md bg-sky-600 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-500">
+                                        {create ? 'Add' : 'Update'}
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                        <div className="bg-gray-50 sm:flex sm:flex-row-reverse">
-                            <button type="submit" disabled={processing} className="disabled:cursor-not-allowed disabled:opacity-50 inline-flex w-full justify-center rounded-md bg-sky-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-500 sm:ml-3 sm:w-auto">
-                                {create ? 'Add' : 'Update'}
-                            </button>
-                            <button disabled={processing} onClick={cancelEdit} type="button" className="disabled:cursor-not-allowed disabled:opacity-50 mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">
-                                Cancel
-                            </button>
-                            {!create &&
-                                <button disabled={processing} onClick={deleteAvatar} type="button" className="sm:mr-3 disabled:cursor-not-allowed disabled:opacity-50 mt-3 inline-flex bg-red-600 w-full justify-center rounded-md  px-3 py-2 text-sm font-semibold shadow-sm ring-1 ring-inset ring-gray-300 text-white hover:bg-red-400 sm:mt-0 sm:w-auto">
-                                    Delete
-                                </button>
-                            }
-                        </div>
-                    </form>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>

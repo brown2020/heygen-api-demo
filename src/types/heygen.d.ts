@@ -1,3 +1,6 @@
+import { FabricImage } from "fabric";
+import * as fabric from 'fabric';
+
 export interface Avatar {
   avatar_id: string;
   avatar_name: string;
@@ -22,9 +25,28 @@ export interface TalkingPhoto {
   owner?: string;
 }
 
+export type Emotion = 'neutral' | 'happy' | 'surprise' | 'serious';
+export type Movement = 'neutral' | 'lively';
+export type Frame = 'landscape' | 'square' | 'portrait' | 'fit';
+
 export type NotificationType = 'video_generated'
 export type NotificationStatus = 'unread' | 'read';
 
+export type DIDVideoStatus = 'created' | 'done' | 'error' | 'started' | 'rejected';
+
+export type VideoDetail = {
+  id: string;
+  did_id: string;
+  title: string;
+  avatar_id?: string;
+  type: "personal" | "template";
+  video_url?: string;
+  owner: string;
+  d_id_status: DIDVideoStatus;
+  created_at: number;
+  errorMessage?: string;
+  error?: Record<string, unknown>;
+}
 
 export type NotificationDetail = {
   id?: string;
@@ -50,3 +72,17 @@ export interface HeygenAvatarResponse {
     talking_photos: TalkingPhoto[];
   };
 }
+
+
+
+interface CustomFabricImage
+extends FabricImage<Partial<fabric.ImageProps>, fabric.SerializedImageProps, fabric.ObjectEvents> {
+  is_avatar?: boolean; // Add a custom `id` property
+}
+
+type CanvasObjects = any[];
+type CanvasObject = {
+  objects: CanvasObjects;
+  background?: string;
+  version: string;
+};
