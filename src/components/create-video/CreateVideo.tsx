@@ -214,7 +214,7 @@ export default function CreateVideo({ video_id }: { video_id: string | null }) {
         return () => {
             window.removeEventListener('beforeunload', handleBeforeUnload);
         };
-    }, [completedProcessesRef.current, totalProcessesRef.current]);
+    }, []);
 
     const [videoCanvasDetail, setVideoCanvasDetail] = useState<{
         canvas_json: CanvasObject;
@@ -240,7 +240,7 @@ export default function CreateVideo({ video_id }: { video_id: string | null }) {
         }
         setAudioDetail(_audio);
         setProcessing(false);
-    }, [])
+    }, [findVoice])
 
     useEffect(() => {
         // If video id is exist then fetch video details
@@ -287,7 +287,7 @@ export default function CreateVideo({ video_id }: { video_id: string | null }) {
             });
 
         }
-    }, [video_id, uid, personalTalkingPhotos])
+    }, [video_id, uid, personalTalkingPhotos, handleChangeAvatar])
 
 
     const canvasMainImage = useCallback(() => {
@@ -654,7 +654,7 @@ export default function CreateVideo({ video_id }: { video_id: string | null }) {
                 canvas.off('object:removed', handleObjectChange);
             };
         }
-    }, [canvas, loadFirstTime, video_id]);
+    }, [canvas, loadFirstTime, video_id, handleObjectChange]);
 
     useEffect(() => {
         if (uid && personalTalkingPhotos.length > 0 && canvas && canvasContainerRef.current) {

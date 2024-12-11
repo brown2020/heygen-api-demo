@@ -136,7 +136,7 @@ export default function AvatarForm({ submit, create, avatarDetail }: {
     }, [voiceId, options]);
     const voiceValue = useMemo(() => {
         return audioOptions.find((option) => option.voice_id === voiceId);
-    }, [voiceId, options]);
+    }, [voiceId, audioOptions]);
 
     const createNewTalkingPhoto = async () => {
         const formValues = getValues();

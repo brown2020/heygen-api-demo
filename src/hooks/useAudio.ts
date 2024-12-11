@@ -41,7 +41,7 @@ export const useAudio = () => {
             await fetchVoices();
             setIsFetching(false);
         }
-    }, [profile.elevenlabs_api_key])
+    }, [profile.elevenlabs_api_key, fetchVoices])
 
     useEffect(() => {
         if (profile.elevenlabs_api_key !== null)
