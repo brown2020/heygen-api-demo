@@ -5,6 +5,7 @@ import { db } from "@/firebase/firebaseClient";
 import { Voice } from "elevenlabs/api";
 import { getAudioList } from "@/actions/getAudioList";
 import toast from "react-hot-toast";
+import { Avatar, TalkingPhoto } from "@/types/heygen";
 
 export interface ProfileType {
   email: string;
@@ -41,13 +42,15 @@ interface AuthState {
 }
 
 interface ProfileState {
-  profile: ProfileType;
+  profile: ProfileType | null;
   fetchProfile: () => void;
   updateProfile: (newProfile: Partial<ProfileType>) => Promise<void>;
   useCredits: (amount: number) => Promise<boolean>;
   addCredits: (amount: number) => Promise<void>;
   voices: Voice[] | null;
   fetchVoices: () => Promise<void>;
+  avatars: Avatar[] | null;
+  talking_photos: TalkingPhoto[] | null;
 }
 
 const mergeProfileWithDefaults = (
@@ -64,8 +67,10 @@ const mergeProfileWithDefaults = (
 });
 
 const useProfileStore = create<ProfileState>((set, get) => ({
-  profile: defaultProfile,
+  profile: null,
   voices: null,
+  avatars: null,
+  talking_photos: null,
   fetchProfile: async () => {
     const { uid, authEmail, authDisplayName, authPhotoUrl, authEmailVerified } =
       useAuthStore.getState();
@@ -84,7 +89,6 @@ const useProfileStore = create<ProfileState>((set, get) => ({
           authPhotoUrl,
           authEmailVerified,
         });
-        console.log("Profile found:", newProfile);
       } else {
         newProfile = {
           email: authEmail || "",
@@ -99,9 +103,10 @@ const useProfileStore = create<ProfileState>((set, get) => ({
           selectedTalkingPhoto: "",
         };
         console.log("No profile found. Creating new profile document.");
+
+        await setDoc(userRef, newProfile, {merge: true});
       }
 
-      await setDoc(userRef, newProfile);
       set({ profile: newProfile });
     } catch (error) {
       console.error("Error fetching or creating profile:", error);
@@ -116,10 +121,10 @@ const useProfileStore = create<ProfileState>((set, get) => ({
 
     try {
       const userRef = doc(db, `users/${uid}/profile/userData`);
-      const updatedProfile = { ...get().profile, ...newProfile };
+      await setDoc(userRef, newProfile, { merge: true });
+      
+      await get().fetchProfile();
 
-      set({ profile: updatedProfile });
-      await updateDoc(userRef, updatedProfile);
       console.log("Profile updated successfully");
     } catch (error) {
       console.error("Error updating profile:", error);
@@ -128,9 +133,10 @@ const useProfileStore = create<ProfileState>((set, get) => ({
 
   useCredits: async (amount: number) => {
     const uid = useAuthStore.getState().uid;
-    if (!uid) return false;
+    const _profile = get().profile;
+    if (!uid || _profile == null) return false;
 
-    const profile = get().profile;
+    const profile = _profile;
     if (profile.credits < amount) {
       return false;
     }
@@ -151,9 +157,9 @@ const useProfileStore = create<ProfileState>((set, get) => ({
 
   addCredits: async (amount: number) => {
     const uid = useAuthStore.getState().uid;
-    if (!uid) return;
-
     const profile = get().profile;
+    if (!uid || !profile) return;
+
     const newCredits = profile.credits + amount;
 
     try {
@@ -168,12 +174,13 @@ const useProfileStore = create<ProfileState>((set, get) => ({
   fetchVoices: async () => {
 
     // check key exist for voices
-    if (get().voices !== null) {
+    const profile = get().profile;
+    if (get().voices !== null || profile == null) {
       return;
     }
 
     // If not, then fetch audio list
-    const audioList = await getAudioList(get().profile.elevenlabs_api_key);
+    const audioList = await getAudioList(profile.elevenlabs_api_key);
     if ("error" in audioList && audioList.error) {
       console.error("Error fetching audio list: ", audioList.error);
       toast.error(audioList.error);

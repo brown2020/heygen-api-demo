@@ -1,8 +1,7 @@
 'use client';
 import { getFileUrl } from "@/actions/getFileUrl";
 import { db, storage } from "@/firebase/firebaseClient";
-import { AVATAR_TYPE_PERSONAL, DEFAULT_AUDIO, DOCUMENT_COLLECTION } from "@/libs/constants";
-// import { AvatarValues, Tack } from "@/types/did";
+import { DOCUMENT_COLLECTION } from "@/libs/constants";
 import { TalkingPhoto, AvatarValues } from "@/types/heygen";
 import { resizeImage } from "@/utils/resizeImage";
 import { useAuthStore } from "@/zustand/useAuthStore";
@@ -11,13 +10,11 @@ import { deleteDoc, doc, getDoc, setDoc } from "firebase/firestore";
 import { ref, uploadBytes } from "firebase/storage";
 import { Image as ImageIcon } from "lucide-react"
 import Image from "next/image";
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import Select, { components, ControlProps } from 'react-select';
-import CustomAudioOption from "./CustomAudioOption";
+import Select from 'react-select';
 import { useAudio } from "@/hooks/useAudio";
 import { Voice } from "elevenlabs/api";
-import CustomAudioOption2 from "./CustomAudioOption2";
 
 export default function AvatarForm({ submit, create, avatarDetail }: {
     create: boolean,
@@ -27,8 +24,8 @@ export default function AvatarForm({ submit, create, avatarDetail }: {
     const { handleSubmit, control, formState, reset, watch, setValue, getValues } = useForm<AvatarValues>({ mode: 'all' });
     const [dragging, setDragging] = useState(false);
     const [loading, setLoading] = useState(false);
-    const { audioList: options, isFetching: fetchingAudio } = useAudio();
-    const [audioOptions, setAudioOptions] = useState<Voice[]>(options);
+    const { audioList: options } = useAudio();
+    const [, setAudioOptions] = useState<Voice[]>(options);
     const onSubmit = handleSubmit((data) => {
         setProcessing(true);
         try {
@@ -112,7 +109,6 @@ export default function AvatarForm({ submit, create, avatarDetail }: {
         if (create) {
             const _avatarId = `new-${Date.now()}`;
             reset({
-                voiceId: DEFAULT_AUDIO,
                 name: '',
                 preview_image_url: '',
                 talking_photo_id: _avatarId
@@ -120,7 +116,6 @@ export default function AvatarForm({ submit, create, avatarDetail }: {
             setAvatarId(_avatarId)
         } else if (avatarDetail !== null) {
             reset({
-                voiceId: avatarDetail.voiceId,
                 name: avatarDetail.talking_photo_name,
                 preview_image_url: avatarDetail.preview_image_url,
                 talking_photo_id: avatarDetail.talking_photo_id
@@ -129,14 +124,7 @@ export default function AvatarForm({ submit, create, avatarDetail }: {
         }
     }, [create, avatarDetail, reset])
 
-    const voiceId = watch('voiceId');
     const previewImageUrl = watch('preview_image_url');
-    const voiceDetail = useMemo(() => {
-        return options.find((audio) => audio.voice_id === voiceId);
-    }, [voiceId, options]);
-    const voiceValue = useMemo(() => {
-        return audioOptions.find((option) => option.voice_id === voiceId);
-    }, [voiceId, audioOptions]);
 
     const createNewTalkingPhoto = async () => {
         const formValues = getValues();
@@ -146,10 +134,6 @@ export default function AvatarForm({ submit, create, avatarDetail }: {
             talking_photo_id: formValues.talking_photo_id,
             talking_photo_name: formValues.name,
             preview_image_url: formValues.preview_image_url, // Placeholder URL or default image
-            favorite_of: [],
-            type: AVATAR_TYPE_PERSONAL,
-            voiceId: formValues.voiceId,
-            owner: uid
         };
 
         // Save the new talking photo to Firestore
@@ -195,20 +179,6 @@ export default function AvatarForm({ submit, create, avatarDetail }: {
             console.log(e);
         }
     }
-    const customFilterOption = (option: { data: Voice }, input: string) => {
-
-        if (input === '') return true;
-        else {
-            if (option.data.name?.toLowerCase().includes(input.toLowerCase())) {
-                return true;
-            } else if (option.data.labels?.accent?.toLowerCase().includes(input.toLowerCase())) {
-                return true;
-            } else if (option.data.fine_tuning?.language?.toLowerCase().includes(input.toLowerCase())) {
-                return true;
-            }
-        }
-        return false;
-    };
 
     const applyFilters = (gender: string, country: string) => {
         let filteredOptions = options;
@@ -328,37 +298,6 @@ export default function AvatarForm({ submit, create, avatarDetail }: {
                                                 />
                                             </div>
                                         </div>
-                                        <Controller
-                                            control={control}
-                                            name="voiceId"
-                                            render={({ field }) => (
-                                                !fetchingAudio ?
-                                                    <Select
-                                                        value={voiceValue}
-                                                        onChange={(e) => { setValue('voiceId', (e as Voice)?.voice_id); field.onBlur(); }}
-                                                        options={audioOptions}
-                                                        filterOption={customFilterOption}
-                                                        components={{
-                                                            Option: CustomAudioOption, Control: ({ children, ...props }: ControlProps<Voice, false>) => {
-                                                                return (
-                                                                    <components.Control {...props}>
-                                                                        {voiceValue ? <CustomAudioOption2 data={voiceValue} /> : <></>}
-                                                                        {children}
-                                                                    </components.Control>
-                                                                );
-                                                            }
-                                                        }}
-                                                    /> : <span>Fetching...</span>
-                                            )}
-                                        />
-
-                                        {
-                                            voiceDetail ?
-                                                <audio controls key={voiceDetail.voice_id} className="xs:mt-2 max-xs:w-full bg-gray-100 rounded-full shadow-lg">
-                                                    <source src={voiceDetail.preview_url} type="audio/mpeg" />
-                                                    Your browser does not support the audio element.
-                                                </audio> : <Fragment />
-                                        }
                                     </div>
                                 </div>
                                 <div className="bg-gray-50 flex justify-between w-full gap-2 mt-5">

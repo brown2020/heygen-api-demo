@@ -6,6 +6,14 @@ import toast from "react-hot-toast";
 export const useAudio = () => {
     const {profile, voices, fetchVoices } = useProfileStore();
 
+    const _profile = useMemo(() => {
+        return profile ? {
+            elevenlabs_api_key: profile.elevenlabs_api_key,
+        } : {
+            elevenlabs_api_key: "",
+        }
+    }, [profile]);
+
     const [isFetching, setIsFetching] = useState(false);
 
     const voiceList = useMemo(() => {
@@ -19,7 +27,7 @@ export const useAudio = () => {
         if (voice) { return { status: true, voice }; }
         else {
             setIsFetching(true);
-            const voice = await findAudio(profile.elevenlabs_api_key, voiceId)
+            const voice = await findAudio(_profile.elevenlabs_api_key, voiceId)
             if (voice.status) {
                 return { status: true, voice: voice.voice }
             }
@@ -36,15 +44,15 @@ export const useAudio = () => {
     }
 
     const loadAudioList = useCallback(async () => {
-        if (profile.elevenlabs_api_key !== null) {
+        if (_profile.elevenlabs_api_key !== null) {
             setIsFetching(true);
             await fetchVoices();
             setIsFetching(false);
         }
-    }, [profile.elevenlabs_api_key, fetchVoices])
+    }, [_profile.elevenlabs_api_key, fetchVoices])
 
     useEffect(() => {
-        if (profile.elevenlabs_api_key !== null)
+        if (_profile.elevenlabs_api_key !== null)
             loadAudioList()
     }, [profile, loadAudioList])
 

@@ -3,13 +3,11 @@ import {  useEffect, Fragment } from "react";
 // import { useRouter, usePathname } from "next/navigation";
 // import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/firebase/firebaseClient";
 import { Pencil } from "lucide-react";
 import { TalkingPhoto } from "@/types/heygen";
-import { useAuthStore } from "@/zustand/useAuthStore";
-import toast from "react-hot-toast";
-import { AVATAR_TYPE_PERSONAL, DOCUMENT_COLLECTION } from "@/libs/constants";
+import { DOCUMENT_COLLECTION } from "@/libs/constants";
 
 interface AvatarCardProps {
   id: string;
@@ -30,7 +28,6 @@ export default function AvatarCard({ id, avatar, edit }: AvatarCardProps) {
   // const updateProfile = useProfileStore((state) => state.updateProfile);
   // const isSelected = selectedTalkingPhoto === id;
 
-  const uid = useAuthStore((state) => state.uid);
   // const router = useRouter();
   // const pathname = usePathname();
   // const isOnGeneratePage = pathname === "/generate";
@@ -60,36 +57,36 @@ export default function AvatarCard({ id, avatar, edit }: AvatarCardProps) {
 
     // const docRef = doc(db, "talkingPhotos", id);
     // await setDoc(docRef, { favorite: newFavoriteStatus }, { merge: true });
-    toast.promise(
-      new Promise(async (resolve, reject) => {
-        const favorite_of = avatar?.favorite_of || [];
+    // toast.promise(
+    //   new Promise(async (resolve, reject) => {
+    //     const favorite_of = [];
 
-        if (favorite_of.includes(uid)) {
-          favorite_of.splice(favorite_of.indexOf(uid), 1);
-        } else {
-          favorite_of.push(uid);
-        }
+    //     // if (favorite_of.includes(uid)) {
+    //     //   favorite_of.splice(favorite_of.indexOf(uid), 1);
+    //     // } else {
+    //     //   favorite_of.push(uid);
+    //     // }
 
-        const docRef = doc(db, DOCUMENT_COLLECTION, id);
+    //     const docRef = doc(db, DOCUMENT_COLLECTION, id);
 
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          await setDoc(docRef, { favorite_of }, { merge: true });
-          resolve(true);
-        } else {
-          reject(false);
-        }
-      }),
-      {
-        loading: "Processing...",
-        success: () => {
-          return `Success.`;
-        },
-        error: () => {
-          return `Failed`;
-        },
-      }
-    )
+    //     const docSnap = await getDoc(docRef);
+    //     if (docSnap.exists()) {
+    //       await setDoc(docRef, { favorite_of }, { merge: true });
+    //       resolve(true);
+    //     } else {
+    //       reject(false);
+    //     }
+    //   }),
+    //   {
+    //     loading: "Processing...",
+    //     success: () => {
+    //       return `Success.`;
+    //     },
+    //     error: () => {
+    //       return `Failed`;
+    //     },
+    //   }
+    // )
   };
 
   // const handleInputChange =
@@ -138,10 +135,10 @@ export default function AvatarCard({ id, avatar, edit }: AvatarCardProps) {
         onClick={toggleFavorite}
         className="transition duration-300 absolute top-3 left-3 p-2 rounded-full"
       >
-        {avatar?.favorite_of?.includes(uid) ? (
+        {false ? (
           <svg
             className={`${
-              avatar?.favorite_of?.includes(uid)
+              false
                 ? "text-red-600"
                 : "text-gray-200"
             }`}
@@ -179,7 +176,7 @@ export default function AvatarCard({ id, avatar, edit }: AvatarCardProps) {
           </svg>
         )}
       </button>
-      {avatar?.type == AVATAR_TYPE_PERSONAL ? (
+      {false ? (
         <button
           onClick={() => {
             if (edit) edit();

@@ -7,22 +7,12 @@ export interface Avatar {
   gender: string;
   preview_image_url: string;
   preview_video_url?: string;
-  favorite?: boolean;
-  name?: string;
-  project?: string;
 }
 
 export interface TalkingPhoto {
   talking_photo_id: string;
   talking_photo_name: string;
   preview_image_url: string;
-  favorite_of?: string[];
-  favorite?: boolean;
-  name?: string;
-  project?: string;
-  type?: string;
-  voiceId?: string;
-  owner?: string;
 }
 
 export type Emotion = 'neutral' | 'happy' | 'surprise' | 'serious';
@@ -58,7 +48,6 @@ export type NotificationDetail = {
 }
 
 export type AvatarValues = {
-  voiceId: string;
   name: string;
   preview_image_url: string;
   talking_photo_id: string;

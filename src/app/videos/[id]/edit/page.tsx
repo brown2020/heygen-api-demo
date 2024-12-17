@@ -7,10 +7,14 @@ interface Props {
   }>;
 }
 
-const EditVideoPage: FC<Props> = async ({ params }) => {
-  const { id } = await params; // Await the params Promise
+const EditVideoPage: FC<Props> = async (
+  // { params }
+) => {
+  // const { id } = await params; // Await the params Promise
 
-  return <CreateVideo video_id={id} />;
+  return <CreateVideo 
+  // video_id={id} 
+  />;
 };
 
 export default EditVideoPage;

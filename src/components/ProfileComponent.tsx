@@ -1,25 +1,33 @@
 "use client";
 
 import useProfileStore from "@/zustand/useProfileStore";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export default function ProfileComponent() {
   const profile = useProfileStore((state) => state.profile);
+
   const updateProfile = useProfileStore((state) => state.updateProfile);
-  const [heygenApiKey, setHeygenApiKey] = useState(profile.heygen_api_key);
-  const [elevenlabsApiKey, setElevenlabsApiKey] = useState(
-    profile.elevenlabs_api_key
-  );
+  const _profile = useMemo(() => {
+    return profile ? {
+      heygen_api_key: profile.heygen_api_key,
+      elevenlabs_api_key: profile.elevenlabs_api_key,
+    } : {
+      heygen_api_key: "",
+      elevenlabs_api_key: "",
+    }
+  }, [profile]);
+  const [heygenApiKey, setHeygenApiKey] = useState(_profile.heygen_api_key);
+  const [elevenlabsApiKey, setElevenlabsApiKey] = useState(_profile.elevenlabs_api_key);
 
   useEffect(() => {
-    setHeygenApiKey(profile.heygen_api_key);
-    setElevenlabsApiKey(profile.elevenlabs_api_key);
-  }, [profile.heygen_api_key, profile.elevenlabs_api_key]);
+    setHeygenApiKey(_profile.heygen_api_key);
+    setElevenlabsApiKey(_profile.elevenlabs_api_key);
+  }, [_profile.heygen_api_key, _profile.elevenlabs_api_key]);
 
   const handleApiKeyChange = async () => {
     if (
-      heygenApiKey !== profile.heygen_api_key ||
-      elevenlabsApiKey !== profile.elevenlabs_api_key
+      heygenApiKey !== _profile.heygen_api_key ||
+      elevenlabsApiKey !== _profile.elevenlabs_api_key
     ) {
       try {
         await updateProfile({
@@ -45,7 +53,7 @@ export default function ProfileComponent() {
           id="did-api-key"
           value={heygenApiKey}
           onChange={(e) => setHeygenApiKey(e.target.value)}
-          className="border bg-ghostWhite text-mediumGray rounded-md py-[10px] px-[15px] h-10 text-sm"
+          className="border bg-ghostWhite rounded-md py-[10px] px-[15px] h-10 text-sm"
           placeholder="Enter your Heygen API Key"
         />
       </div>
@@ -58,15 +66,15 @@ export default function ProfileComponent() {
           id="elevenlabs-api-key"
           value={elevenlabsApiKey}
           onChange={(e) => setElevenlabsApiKey(e.target.value)}
-          className="border bg-ghostWhite text-mediumGray rounded-md py-[10px] px-[15px] h-10 text-sm"
+          className="border bg-ghostWhite rounded-md py-[10px] px-[15px] h-10 text-sm"
           placeholder="Enter your ElevenLabs API Key"
         />
       </div>
       <button
         onClick={handleApiKeyChange}
         disabled={
-          heygenApiKey === profile.heygen_api_key &&
-          elevenlabsApiKey === profile.elevenlabs_api_key
+          heygenApiKey === _profile.heygen_api_key &&
+          elevenlabsApiKey === _profile.elevenlabs_api_key
         }
         className="bg-blue-500 text-white px-3 py-2 rounded-md hover:opacity-50 disabled:opacity-50"
       >

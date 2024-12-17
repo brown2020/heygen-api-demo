@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { Loader } from "./Loader";
 import {VideoDetail as VideoDetailType } from "@/types/heygen";
-import VideoDetail from "./video-show/VideoDetail";
+// import VideoDetail from "./video-show/VideoDetail";
 
 export default function VideosPage() {
 
@@ -24,7 +24,7 @@ export default function VideosPage() {
     const [isModalOpen, setModalOpen] = useState<boolean>(false);
     const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
 
-    const [videoID, setVideoID] = useState<string | null>(null);
+    const [, setVideoID] = useState<string | null>(null);
 
     // const profile = useProfileStore((state) => state.profile);
 
@@ -78,9 +78,9 @@ export default function VideosPage() {
         }
     }
 
-    function closeVideoModel () {
-        setVideoID(null);
-    }
+    // function closeVideoModel () {
+    //     setVideoID(null);
+    // }
 
     return (
         <>
@@ -92,7 +92,7 @@ export default function VideosPage() {
             {
                 fetching ? <><Loader /></> :
                     <div className="p-4 h-full">
-                        { videoID && ( <VideoDetail id={videoID} closeVideoModel={closeVideoModel} /> )}
+                        {/* { videoID && ( <VideoDetail id={videoID} closeVideoModel={closeVideoModel} /> )} */}
                         {
                             videoList.length > 0 ?
                                 (

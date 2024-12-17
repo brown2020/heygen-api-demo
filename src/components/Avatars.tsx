@@ -1,8 +1,6 @@
 "use client";
 
 import { Fragment, useEffect, useState } from "react";
-// import { getHeygenAvatars } from "@/actions/getHeygenAvatars";
-// import useProfileStore from "@/zustand/useProfileStore";
 import AvatarCard from "./AvatarCard";
 import { AvatarValues, TalkingPhoto } from "@/types/heygen";
 // import { ClipLoader } from "react-spinners";
@@ -18,15 +16,11 @@ import AvatarForm from "./AvatarForm";
 
 export default function Avatars() {
   const [personalTalkingPhotos, setPersonalTalkingPhotos] = useState<TalkingPhoto[]>([]);
-  const [templateTalkingPhotos, setTemplateTalkingPhotos] = useState<TalkingPhoto[]>([]);
+  const [, setTemplateTalkingPhotos] = useState<TalkingPhoto[]>([]);
   const [showModel, setShowModel] = useState(false);
   const [showFavorites, setShowFavorites] = useState(false);
   const [selectedAvatar, setSelectedAvatar] = useState<TalkingPhoto | null>(null);
   const uid = useAuthStore((state) => state.uid);
-
-  // const [isLoading, setIsLoading] = useState(false);
-  // const [error, setError] = useState<string | null>(null);
-  // const profile = useProfileStore((state) => state.profile);
 
   const showNotification = (message: string) => {
     toast.success(message, {
@@ -88,39 +82,10 @@ export default function Avatars() {
     setSelectedAvatar(avatar);
     setShowModel(true);
   }
-  // const fetchTalkingPhotos = async () => {
-  //   setIsLoading(true);
-  //   setError(null);
-
-  //   if (!profile.heygen_api_key) {
-  //     setError("API key is missing");
-  //     setIsLoading(false);
-  //     return;
-  //   }
-
-  //   const result = await getHeygenAvatars(profile.heygen_api_key);
-  //   if (result && result.data) {
-  //     const personalTalkingPhotos = result.data.talking_photos;
-  //     const talkingPhotosCollection = collection(db, "personalTalkingPhotos");
-
-  //     personalTalkingPhotos.forEach(async (photo) => {
-  //       const docRef = doc(talkingPhotosCollection, photo.talking_photo_id);
-  //       await setDoc(docRef, photo, { merge: true });
-  //     });
-  //   } else {
-  //     setError("Failed to fetch talking photos");
-  //   }
-
-  //   setIsLoading(false);
-  // };
 
   const filteredTalkingPhotos = showFavorites
-    ? personalTalkingPhotos.filter((p) => p.favorite)
+    ? personalTalkingPhotos
     : personalTalkingPhotos;
-
-  const filteredTemplateTalkingPhotos = showFavorites
-    ? templateTalkingPhotos.filter((p) => p.favorite_of?.includes(uid))
-    : templateTalkingPhotos;
 
 
   const createNewTalkingPhoto = async () => {
@@ -177,41 +142,12 @@ export default function Avatars() {
             ))}
           </ul>
         </div>
-        <div>
-        <h3 className="mb-3 text-lg font-semibold text-gray-600">Demo Avatars</h3>
-          <ul className="grid min-[450px]:grid-cols-2 grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {filteredTemplateTalkingPhotos.map((photo, index) => (
-              <AvatarCard avatar={photo} key={index} id={photo.talking_photo_id} edit={() => openForm(photo)} />
-            ))}
-          </ul>
-        </div>
+        
         <Model show={showModel}>
           {showModel ? <AvatarForm submit={handleClose} create={selectedAvatar == null} avatarDetail={selectedAvatar} /> : <Fragment />}
         </Model>
       </div>
     </div>
-    // <div>
-    //   <div className="sticky top-0 bg-white z-10 shadow-md">
-    //     <div className="flex justify-between items-center p-4">
-    //       <button
-    //         onClick={() => setShowFavorites(!showFavorites)}
-    //         className="bg-gray-200 text-gray-700 px-3 py-2 rounded-md"
-    //       >
-    //         {showFavorites ? "Show All" : "Show Favorites"}
-    //       </button>
-    //       <button
-    //         onClick={fetchTalkingPhotos}
-    //         className="bg-blue-500 text-white px-3 py-2 rounded-md hover:opacity-50 flex items-center justify-center"
-    //         disabled={isLoading}
-    //       >
-    //         {isLoading ? (
-    //           <ClipLoader size={20} color={"#ffffff"} />
-    //         ) : (
-    //           "Fetch Talking Photos"
-    //         )}
-    //       </button>
-    //     </div>
-    //   </div>
 
     //   {error && <div className="text-red-500 mt-4">{error}</div>}
 
