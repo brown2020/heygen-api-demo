@@ -1,26 +1,20 @@
 "use client";
 
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useState } from "react";
 import AvatarCard from "./AvatarCard";
-import { AvatarValues, TalkingPhoto } from "@/types/heygen";
+import { AvatarGroup } from "@/types/heygen";
 // import { ClipLoader } from "react-spinners";
-import { db } from "@/firebase/firebaseClient";
 // import { collection, onSnapshot, setDoc, doc, query, where } from "firebase/firestore";
-import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { Plus } from "lucide-react";
-import { useAuthStore } from "@/zustand/useAuthStore";
-import { AVATAR_TYPE_PERSONAL, DOCUMENT_COLLECTION } from "@/libs/constants";
 import toast from "react-hot-toast";
-import Model from "./Model";
 import AvatarForm from "./AvatarForm";
+import { useAvatars } from "@/hooks/useAvatars";
+import { Modal } from "@nextui-org/modal";
 
 export default function Avatars() {
-  const [personalTalkingPhotos, setPersonalTalkingPhotos] = useState<TalkingPhoto[]>([]);
-  const [, setTemplateTalkingPhotos] = useState<TalkingPhoto[]>([]);
-  const [showModel, setShowModel] = useState(false);
+  const [showAvatarCardModel, setShowAvatarCardModel] = useState(false);
   const [showFavorites, setShowFavorites] = useState(false);
-  const [selectedAvatar, setSelectedAvatar] = useState<TalkingPhoto | null>(null);
-  const uid = useAuthStore((state) => state.uid);
+  const { publicAvatarGroups, personalAvatarGroups, isFetchingAvatarGroups, changeSelectedGroup, selectedAvatarGroup, selectedAvatarLooks } = useAvatars();
 
   const showNotification = (message: string) => {
     toast.success(message, {
@@ -40,68 +34,24 @@ export default function Avatars() {
     });
   };
 
-  useEffect(() => {
-    if (!uid) return;
-    const personalTalkingPhotosCollection = query(
-      collection(db, DOCUMENT_COLLECTION),
-      where('type', '==', AVATAR_TYPE_PERSONAL),
-      where('owner', '==', uid)
-    );
-    const unsubscribeTalkingPhotos = onSnapshot(
-      personalTalkingPhotosCollection,
-      (snapshot) => {
-        const talkingPhotosList = snapshot.docs.map(
-          (doc) => doc.data() as TalkingPhoto
-        );
-        setPersonalTalkingPhotos(talkingPhotosList);
-      }
-    );
-
-    const templateTalkingPhotosCollection = query(
-      collection(db, DOCUMENT_COLLECTION),
-      where('type', '==', AVATAR_TYPE_PERSONAL)
-    );
-    const unsubscribeTemplateTalkingPhotos = onSnapshot(
-      templateTalkingPhotosCollection,
-      (snapshot) => {
-        const talkingPhotosList = snapshot.docs.map(
-          (doc) => doc.data() as TalkingPhoto
-        );
-        setTemplateTalkingPhotos(talkingPhotosList);
-      }
-    );
-
-    return () => {
-      unsubscribeTalkingPhotos();
-      unsubscribeTemplateTalkingPhotos()
-    };
-  }, [uid]);
-
-
-  const openForm = (avatar: TalkingPhoto | null) => {
-    setSelectedAvatar(avatar);
-    setShowModel(true);
+  const openForm = (avatar: AvatarGroup | null) => {
+    changeSelectedGroup(avatar);
+    setShowAvatarCardModel(true);
   }
 
-  const filteredTalkingPhotos = showFavorites
-    ? personalTalkingPhotos
-    : personalTalkingPhotos;
-
-
   const createNewTalkingPhoto = async () => {
-    openForm(null);
   };
 
-  const handleClose = (val: { status: boolean, data: AvatarValues | null }) => {
+  const handleClose = (val: { status: boolean }) => {
     if (val.status) {
-      if (selectedAvatar == null) {
+      if (selectedAvatarGroup == null) {
         showNotification('Avatar Created Successfully');
       } else {
         showNotification('Avatar Updated Successfully');
       }
     }
-    setSelectedAvatar(null)
-    setShowModel(false);
+    changeSelectedGroup(null)
+    setShowAvatarCardModel(false);
   };
   return (
     <div className="relative p-2">
@@ -137,25 +87,24 @@ export default function Avatars() {
                 </div>
               </div>
             </article>
-            {filteredTalkingPhotos.map((photo, index) => (
-              <AvatarCard avatar={photo} key={index} id={photo.talking_photo_id} edit={() => openForm(photo)} />
+            {personalAvatarGroups.map((avatar, index) => (
+              <AvatarCard avatar={avatar} type="talking_photo" key={index} id={avatar.id} />
             ))}
           </ul>
         </div>
-        
-        <Model show={showModel}>
-          {showModel ? <AvatarForm submit={handleClose} create={selectedAvatar == null} avatarDetail={selectedAvatar} /> : <Fragment />}
-        </Model>
+        <div>
+          <h3 className="mb-3 text-lg font-semibold text-gray-600">Demo Avatars</h3>
+          {isFetchingAvatarGroups && <p>Loading...</p>}
+          <ul className="grid min-[450px]:grid-cols-2 grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {publicAvatarGroups.map((avatar, index) => (
+              <AvatarCard open={() => {openForm(avatar)}} avatar={avatar} type="talking_photo" key={index} id={avatar.id} />
+            ))}
+          </ul>
+        </div>
+        <Modal isOpen={showAvatarCardModel} size="5xl" onClose={() => {handleClose({status: false})}} scrollBehavior="inside">
+        {selectedAvatarGroup !== null ? <AvatarForm submit={handleClose} avatarDetail={selectedAvatarGroup} avatarLooks={selectedAvatarLooks} /> : <Fragment />}
+      </Modal>
       </div>
     </div>
-
-    //   {error && <div className="text-red-500 mt-4">{error}</div>}
-
-    //   <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
-    //     {filteredTalkingPhotos.map((photo, index) => (
-    //       <AvatarCard key={index} id={photo.talking_photo_id} />
-    //     ))}
-    //   </ul>
-    // </div>
-  );
+  )
 }

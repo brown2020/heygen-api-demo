@@ -1,8 +1,8 @@
-import Avatars from "@/components/Avatars";
+import Avatars from "@/components/avatars/Avatars";
 import HeyGenWrapper from "@/components/wrappers/HeyGenWrapper";
 
 export default function AvatarsPage() {
   return <HeyGenWrapper>
-    <Avatars />;
+    <Avatars />
   </HeyGenWrapper>
 }

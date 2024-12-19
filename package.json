@@ -12,6 +12,8 @@
     "@clerk/nextjs": "^6.0.2",
     "@hookform/error-message": "^2.0.1",
     "@hookform/resolvers": "^3.9.0",
+    "@nextui-org/card": "^2.2.7",
+    "@nextui-org/image": "^2.2.3",
     "@nextui-org/modal": "^2.2.5",
     "@nextui-org/popover": "^2.3.2",
     "@nextui-org/theme": "^2.4.3",

@@ -5,7 +5,8 @@ import { db } from "@/firebase/firebaseClient";
 import { Voice } from "elevenlabs/api";
 import { getAudioList } from "@/actions/getAudioList";
 import toast from "react-hot-toast";
-import { Avatar, TalkingPhoto } from "@/types/heygen";
+import { Avatar, AvatarGroup, TalkingPhoto } from "@/types/heygen";
+import { getHeygenAvatarGroups } from "@/actions/getHeygenAvatarGroups";
 
 export interface ProfileType {
   email: string;
@@ -49,7 +50,7 @@ interface ProfileState {
   addCredits: (amount: number) => Promise<void>;
   voices: Voice[] | null;
   fetchVoices: () => Promise<void>;
-  avatars: Avatar[] | null;
+  avatarGroups: AvatarGroup[] | null;
   talking_photos: TalkingPhoto[] | null;
 }
 
@@ -69,7 +70,7 @@ const mergeProfileWithDefaults = (
 const useProfileStore = create<ProfileState>((set, get) => ({
   profile: null,
   voices: null,
-  avatars: null,
+  avatarGroups: null,
   talking_photos: null,
   fetchProfile: async () => {
     const { uid, authEmail, authDisplayName, authPhotoUrl, authEmailVerified } =

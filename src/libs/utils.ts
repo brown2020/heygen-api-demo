@@ -1,4 +1,4 @@
-import { CanvasObjects } from "@/types/heygen";
+import { AvatarLook, CanvasObjects, HeyGenAvatarGroupLook } from "@/types/heygen";
 import { AUDIO_LIST } from "./constants";
 
 export function getAudioDetails(audio_id: string) {
@@ -65,4 +65,28 @@ export const cleanObject = (obj: Record<string, any>) => {
 
     // Return the cleaned object
     return obj;
+}
+
+export const getAvatarLook = (heyGenAvatarGroupLook: HeyGenAvatarGroupLook, group_id: string): AvatarLook => {
+    if("id" in heyGenAvatarGroupLook){
+        return {
+            id: heyGenAvatarGroupLook.id,
+            created_at: heyGenAvatarGroupLook.created_at,
+            image_url: heyGenAvatarGroupLook.image_url,
+            is_motion: heyGenAvatarGroupLook.is_motion,
+            motion_preview_url: heyGenAvatarGroupLook.motion_preview_url,
+            name: heyGenAvatarGroupLook.name,
+            group_id,
+        };
+    }else{
+        return {
+            id: heyGenAvatarGroupLook.avatar_id,
+            created_at: 0,
+            image_url: heyGenAvatarGroupLook.preview_image_url,
+            is_motion: true,
+            motion_preview_url: heyGenAvatarGroupLook.preview_video_url,
+            name: heyGenAvatarGroupLook.avatar_name,
+            group_id
+        }
+    }
 }

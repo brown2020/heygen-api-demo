@@ -6,7 +6,7 @@ import { collection, deleteDoc, doc, DocumentData, onSnapshot, query, where } fr
 import PlayVideoIcon from '@/assets/images/play-video-1.png'
 import Image from "next/image";
 import { useAuthStore } from "@/zustand/useAuthStore";
-import { AVATAR_TYPE_PERSONAL, VIDEO_COLLECTION } from "@/libs/constants";
+import { VIDEO_COLLECTION } from "@/libs/constants";
 import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { Loader } from "./Loader";
@@ -35,7 +35,7 @@ export default function VideosPage() {
         setFetching(true);
         const videoCollection = query(
             collection(db, VIDEO_COLLECTION),
-            where('type', '==', AVATAR_TYPE_PERSONAL),
+            // where('type', '==', AVATAR_TYPE_PERSONAL),
             where('owner', '==', uid),
         );
 

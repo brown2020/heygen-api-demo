@@ -78,6 +78,9 @@ Make sure you have the following tools installed on your machine:
    FIREBASE_UNIVERSE_DOMAIN=your_firebase_universe_domain
    ```
 
+### Add following rules to firebase
+
+
 ### Running the Application
 
 1. **Start the development server**:

@@ -2,7 +2,7 @@
 
 import ProfileComponent from "./ProfileComponent";
 import PaymentsPage from "./PaymentsPage";
-import AuthDataDisplay from "./AuthDataDisplay";
+import AuthDataDisplay from "./avatars/AuthDataDisplay";
 import ProfileCreditComponent from "./ProfileCreditComponent";
 
 export default function Profile() {
