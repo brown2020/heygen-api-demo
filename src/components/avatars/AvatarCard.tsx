@@ -1,13 +1,7 @@
-import {  useEffect, Fragment, useMemo } from "react";
-// import { useState, useEffect, Fragment } from "react";
-// import { useRouter, usePathname } from "next/navigation";
-// import { useRouter } from "next/navigation";
+import { Fragment, useMemo } from "react";
 import Image from "next/image";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/firebase/firebaseClient";
 import { Pencil } from "lucide-react";
-import { Avatar, AvatarGroup, AvatarType, TalkingPhoto } from "@/types/heygen";
-import { DOCUMENT_COLLECTION } from "@/libs/constants";
+import { AvatarGroup, AvatarType } from "@/types/heygen";
 
 interface AvatarCardProps {
   id: string;
@@ -16,7 +10,7 @@ interface AvatarCardProps {
   open?: () => void
 }
 
-export default function AvatarCard({ id, avatar, open, type }: AvatarCardProps) {
+export default function AvatarCard({ avatar, open }: AvatarCardProps) {
   // const handleInputChange =
   //   (setter: React.Dispatch<React.SetStateAction<string>>) =>
   //     (e: React.ChangeEvent<HTMLInputElement>) => {

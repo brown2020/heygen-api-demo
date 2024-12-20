@@ -1,8 +1,7 @@
 "use server";
 
 import { HeyGenService } from "@/libs/HeyGenService";
-import { Avatar, ApiAvatarGroupResponse, HeygenAvatarResponse, HeyGenFailResponse, TalkingPhoto } from "@/types/heygen";
-import { auth } from "@clerk/nextjs/server";
+import { ApiAvatarGroupResponse, HeyGenFailResponse } from "@/types/heygen";
 import axios from "axios";
 import { addErrorReport } from "./addErrorReport";
 

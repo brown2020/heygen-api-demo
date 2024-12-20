@@ -4,6 +4,7 @@ export const VIDEO_COLLECTION = 'heygen-generated-videos';
 export const WEBHOOK_HISTORY_COLLECTION = 'heygen-webhook-history';
 export const ERROR_REPORT_COLLECTION = 'heygen-error-report';
 export const AVATAR_GROUP_COLLECTION = 'heygen-avatar-groups';
+export const AVATAR_NOT_FOUND_GROUP_COLLECTION = 'heygen-avatar-not-found-groups';
 export const AVATAR_GROUP_LOOK_COLLECTION = 'heygen-avatar-group-looks';
 export const DOCUMENT_COLLECTION = 'heygen-didTalkingPhotos';
 export const NOTIFICATION_COLLECTION = 'heygen-notifications';

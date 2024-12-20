@@ -1,7 +1,5 @@
 'use client';
 import { AvatarGroup, AvatarLook } from "@/types/heygen";
-import { useAuthStore } from "@/zustand/useAuthStore";
-import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useAudio } from "@/hooks/useAudio";
 import { Voice } from "elevenlabs/api";
@@ -36,7 +34,7 @@ export default function AvatarForm({ avatarDetail, submit, avatarLooks }: {
         </ModalHeader>
         <ModalBody className="">
             <div className="flex justify-center flex-col items-center">
-                <div className="w-full bg-white transform px-4 pb-4 pt-5 sm:p-4 sm:pb-4 rounded-lg transition-all">
+                <div className="w-full bg-white transform rounded-lg transition-all">
                     <div className="flex xs:gap-5 max-xs:flex-col">
                         {
                             !selectedLook &&

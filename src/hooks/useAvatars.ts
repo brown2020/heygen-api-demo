@@ -2,19 +2,27 @@ import { db } from "@/firebase/firebaseClient";
 import { AVATAR_GROUP_COLLECTION, AVATAR_GROUP_LOOK_COLLECTION, OWNERSHIP_TYPE } from "@/libs/constants";
 import { AvatarGroup, AvatarLook } from "@/types/heygen";
 import { useAuthStore } from "@/zustand/useAuthStore";
-import useProfileStore from "@/zustand/useProfileStore";
 import { collection, limit, onSnapshot, orderBy, query, where } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
 
 export const useAvatars = () => {
-  const [personalAvatarGroups, setPersonalAvatarGroups] = useState<AvatarGroup[]>([]);
+  const [
+    personalAvatarGroups, 
+    // setPersonalAvatarGroups
+  ] = useState<AvatarGroup[]>([]);
   const [publicAvatarGroups, setPublicAvatarGroups] = useState<AvatarGroup[]>([]);
   const [isFetchingPublicAvatarGroups, setIsFetchingPublicAvatarGroups] = useState(false);
-  const [isFetchingPersonalAvatarGroups, setIsFetchingPersonalAvatarGroups] = useState(false);
+  const [
+    isFetchingPersonalAvatarGroups, 
+    // setIsFetchingPersonalAvatarGroups
+  ] = useState(false);
 
   const [selectedAvatarGroup, setSelectedAvatarGroup] = useState<AvatarGroup | null>(null);
   const [selectedAvatarLooks, setSelectedAvatarLooks] = useState<AvatarLook[]>([]);
-  const [isFetchingAvatarLooks, setIsFetchingAvatarLooks] = useState(false);
+  const [
+    // isFetchingAvatarLooks
+    , setIsFetchingAvatarLooks
+  ] = useState(false);
 
   const uid = useAuthStore((state) => state.uid);
 

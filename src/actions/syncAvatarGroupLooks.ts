@@ -1,5 +1,5 @@
 import { adminDb } from "@/firebase/firebaseAdmin";
-import { AVATAR_GROUP_COLLECTION, AVATAR_GROUP_LOOK_COLLECTION, OWNERSHIP_TYPE } from "@/libs/constants";
+import { AVATAR_GROUP_COLLECTION, AVATAR_GROUP_LOOK_COLLECTION } from "@/libs/constants";
 import { getAvatarLook } from "@/libs/utils";
 import { AvatarGroup, AvatarLook, HeyGenAvatarGroupLookPhoto, HeyGenAvatarGroupLookVideo } from "@/types/heygen";
 

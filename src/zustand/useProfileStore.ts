@@ -5,8 +5,7 @@ import { db } from "@/firebase/firebaseClient";
 import { Voice } from "elevenlabs/api";
 import { getAudioList } from "@/actions/getAudioList";
 import toast from "react-hot-toast";
-import { Avatar, AvatarGroup, TalkingPhoto } from "@/types/heygen";
-import { getHeygenAvatarGroups } from "@/actions/getHeygenAvatarGroups";
+import { AvatarGroup, TalkingPhoto } from "@/types/heygen";
 
 export interface ProfileType {
   email: string;

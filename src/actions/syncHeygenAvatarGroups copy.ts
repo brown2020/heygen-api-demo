@@ -20,10 +20,10 @@ export async function syncHeygenAvatarGroups(apiKey : string): Promise<SuccessRe
     const avatarGroups = await getHeygenAvatarGroups(apiKey);
     if (!avatarGroups.status) return avatarGroups;
     
-    // Create separate list of public and personal avatar groups
-    const publicGroups = avatarGroups.data.data.avatar_group_list.filter(group => group.group_type.toLowerCase().includes("public"));
+    // // Create separate list of public and personal avatar groups
+    // const publicGroups = avatarGroups.data.data.avatar_group_list.filter(group => group.group_type.toLowerCase().includes("public"));
     
-    const personalGroups = avatarGroups.data.data.avatar_group_list.filter(group => !group.group_type.toLowerCase().includes("public"));
+    // const personalGroups = avatarGroups.data.data.avatar_group_list.filter(group => !group.group_type.toLowerCase().includes("public"));
 
     // - Check for new public avatar
     // - If exist add to group

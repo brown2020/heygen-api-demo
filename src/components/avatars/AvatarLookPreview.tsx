@@ -5,12 +5,12 @@ import { useEffect, useMemo } from "react";
 export default function AvatarLookPreview({ avatarLook }: { avatarLook: AvatarLook }) {
     const avatarPreview = useMemo(() => {
         if(avatarLook.video_url){
-            return <video className="w-full" controls>
+            return <video className="w-[95%]" controls>
             <source src={avatarLook.video_url} type="video/mp4" />
         </video>
         }else if(avatarLook.motion_preview_url){
-            return <video className="w-full" controls>
-            <source src={avatarLook.motion_preview_url} type="video/mp4" />
+            return <video className="w-[95%]" controls>
+            <source className="w-[95%]" src={avatarLook.motion_preview_url} type="video/mp4" />
         </video>
         }
         return <Image className="h-[50vh] max-w-full text-center" src={avatarLook.image_url} />
@@ -21,8 +21,8 @@ export default function AvatarLookPreview({ avatarLook }: { avatarLook: AvatarLo
         
     }, [avatarLook])
 
-    return <div className="h-[50vh] w-full flex flex-col justify-center">
-        <span>{avatarLook.id}</span>
+    return <div className="h-[50vh] w-full flex justify-center">
+        {/* <span>{avatarLook.id}</span> */}
         {
             avatarPreview
         }
