@@ -1,16 +1,22 @@
+"use server";
+
 import { adminDb } from "@/firebase/firebaseAdmin";
 import { AVATAR_GROUP_COLLECTION, AVATAR_GROUP_LOOK_COLLECTION } from "@/libs/constants";
 import { getAvatarLook } from "@/libs/utils";
-import { AvatarGroup, AvatarLook, HeyGenAvatarGroupLookPhoto, HeyGenAvatarGroupLookVideo } from "@/types/heygen";
+import { AvatarGroup, AvatarLook, HeyGenAvatarGroupLookPhoto, HeyGenAvatarGroupLookVideo, HeyGenFailResponse } from "@/types/heygen";
 
-export async function syncAvatarGroupLooks(avatarGroupId: string, avatarGroupLooks: (HeyGenAvatarGroupLookPhoto|HeyGenAvatarGroupLookVideo)[]) {
+
+export async function syncAvatarGroupLooks(avatarGroupId: string, avatarGroupLooks: (HeyGenAvatarGroupLookPhoto|HeyGenAvatarGroupLookVideo)[]): Promise<{status: true} | HeyGenFailResponse> {
     const _avatarGroupLooks = avatarGroupLooks.map(look => getAvatarLook(look, avatarGroupId));
     const avatarGroupLooksIds = _avatarGroupLooks.map(look => look.id);
 
     // Get Avatar Group Exist
     const avatarGroupSnapshot = await adminDb.collection(AVATAR_GROUP_COLLECTION).doc(avatarGroupId).get();
     if(!avatarGroupSnapshot.exists){
-        return {status: false}
+        return {
+            status: false,
+            error: "Avatar Group not found"
+        }
     }
     const avatarGroup = avatarGroupSnapshot.data() as AvatarGroup;
 

@@ -13,8 +13,7 @@ import { Modal } from "@nextui-org/modal";
 
 export default function Avatars() {
   const [showAvatarCardModel, setShowAvatarCardModel] = useState(false);
-  const [showFavorites, setShowFavorites] = useState(false);
-  const { publicAvatarGroups, personalAvatarGroups, isFetchingAvatarGroups, changeSelectedGroup, selectedAvatarGroup, selectedAvatarLooks, isFetchingAvatarLooks } = useAvatars();
+  const { publicAvatarGroups, personalAvatarGroups, isFetchingAvatarGroups, changeSelectedGroup, selectedAvatarGroup, selectedAvatarLooks, isFetchingAvatarLooks, fetchAvatarGroupsFromHeygen } = useAvatars();
 
   const showNotification = (message: string) => {
     toast.success(message, {
@@ -59,17 +58,23 @@ export default function Avatars() {
         <div className="flex justify-between items-center">
           <div className="flex gap-2 max-xs:justify-between w-full">
             <button
+              onClick={fetchAvatarGroupsFromHeygen}
+              className="bg-gray-200 text-gray-700 max-xs:text-sm px-3 py-2 rounded-md"
+            >
+              Fetch Avatars
+            </button>
+            {/* <button
               onClick={() => setShowFavorites(!showFavorites)}
               className="bg-gray-200 text-gray-700 max-xs:text-sm px-3 py-2 rounded-md"
             >
               {showFavorites ? "Show All" : "Show Favorites"}
-            </button>
-            <button
+            </button> */}
+            {/* <button
               onClick={createNewTalkingPhoto}
               className="bg-green-500 text-white px-3 py-2 rounded-md hover:opacity-50"
             >
               Create New Talking Photo
-            </button>
+            </button> */}
           </div>
         </div>
       </div>
@@ -88,7 +93,7 @@ export default function Avatars() {
               </div>
             </article>
             {personalAvatarGroups.map((avatar, index) => (
-              <AvatarCard avatar={avatar} type="talking_photo" key={index} id={avatar.id} />
+              <AvatarCard open={() => {openForm(avatar)}} avatar={avatar} type="talking_photo" key={index} id={avatar.id} />
             ))}
           </ul>
         </div>

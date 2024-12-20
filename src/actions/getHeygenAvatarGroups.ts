@@ -4,18 +4,19 @@ import { HeyGenService } from "@/libs/HeyGenService";
 import { ApiAvatarGroupResponse, HeyGenFailResponse } from "@/types/heygen";
 import axios from "axios";
 import { addErrorReport } from "./addErrorReport";
+import { handleErrorGeneral } from "@/utils/server-utils/handleErrorGeneral";
 
 interface HeyGenAvatarGroupSuccessResponse {
   status: true;
   data: ApiAvatarGroupResponse;
 }
 
-export async function getHeygenAvatarGroups(apiKey : string): Promise<HeyGenAvatarGroupSuccessResponse | HeyGenFailResponse> {
+export async function getHeygenAvatarGroups(apiKey: string, include_public: "true" | "false"): Promise<HeyGenAvatarGroupSuccessResponse | HeyGenFailResponse> {
   try {
     const config = {
       method: "get",
       maxBodyLength: Infinity,
-      url: HeyGenService.endpoints.avatar_group_list,
+      url: HeyGenService.endpoints.avatar_group_list(include_public),
       headers: {
         "x-api-key": apiKey,
       },
@@ -25,7 +26,7 @@ export async function getHeygenAvatarGroups(apiKey : string): Promise<HeyGenAvat
     if (response.data.error) {
       console.error("Error from API:", response.data.error);
       const errorMessage = typeof response.data.error === "string" ? response.data.error : response.data.error.message;
-      await addErrorReport("getHeyGenAvatarGroups", {errorMessage});
+      await addErrorReport("getHeyGenAvatarGroups", { errorMessage });
 
       return {
         status: false,
@@ -38,29 +39,6 @@ export async function getHeygenAvatarGroups(apiKey : string): Promise<HeyGenAvat
       data: response.data
     };
   } catch (error) {
-    /* eslint-disable @typescript-eslint/no-explicit-any */
-    let errorDetails: Record<string, any> = {};
-
-    // Handle known types of error
-    if (error instanceof Error) {
-      errorDetails = {
-        name: error.name,
-        message: error.message,
-        stack: error.stack || null,
-        cause : error.cause || null
-      };
-    } else {
-      // For unknown errors
-      errorDetails = {
-        message: "Error fetching Heygen avatar groups:",
-        raw: JSON.stringify(error), // Serialize the raw error
-      };
-    }
-    await addErrorReport("getHeyGenAvatars", errorDetails);
-    console.error("Error fetching Heygen avatar groups:", error);
-    return {
-      status: false,
-      error: "Error fetching Heygen avatar groups",
-    };
+    return handleErrorGeneral('Error fetching Heygen avatar groups:', 'getHeyGenAvatarGroups', error, { apiKey, include_public }, [401]);
   }
 }

@@ -3,9 +3,7 @@ import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { useAuthStore } from "./useAuthStore";
 import { db } from "@/firebase/firebaseClient";
 import { Voice } from "elevenlabs/api";
-import { getAudioList } from "@/actions/getAudioList";
-import toast from "react-hot-toast";
-import { AvatarGroup, TalkingPhoto } from "@/types/heygen";
+import { AvatarGroup, HeyGenErrorCode, TalkingPhoto } from "@/types/heygen";
 
 export interface ProfileType {
   email: string;
@@ -15,6 +13,7 @@ export interface ProfileType {
   emailVerified: boolean;
   credits: number;
   heygen_api_key: string;
+  heygen_key_updated?: boolean;
   elevenlabs_api_key: string;
   selectedAvatar: string;
   selectedTalkingPhoto: string;
@@ -51,6 +50,8 @@ interface ProfileState {
   fetchVoices: () => Promise<void>;
   avatarGroups: AvatarGroup[] | null;
   talking_photos: TalkingPhoto[] | null;
+  invalid_heygen_api_key: HeyGenErrorCode | null;
+  updateHeyGenApiKeyCode: (code: HeyGenErrorCode | null) => void;
 }
 
 const mergeProfileWithDefaults = (
@@ -64,6 +65,7 @@ const mergeProfileWithDefaults = (
   contactEmail: profile.contactEmail || authState.authEmail || "",
   displayName: profile.displayName || authState.authDisplayName || "",
   photoUrl: profile.photoUrl || authState.authPhotoUrl || "",
+  
 });
 
 const useProfileStore = create<ProfileState>((set, get) => ({
@@ -71,6 +73,7 @@ const useProfileStore = create<ProfileState>((set, get) => ({
   voices: null,
   avatarGroups: null,
   talking_photos: null,
+  invalid_heygen_api_key: null,
   fetchProfile: async () => {
     const { uid, authEmail, authDisplayName, authPhotoUrl, authEmailVerified } =
       useAuthStore.getState();
@@ -113,11 +116,22 @@ const useProfileStore = create<ProfileState>((set, get) => ({
     }
   },
 
+  updateHeyGenApiKeyCode: (code: HeyGenErrorCode | null) => {
+    set({ invalid_heygen_api_key: code });
+  },
+
   updateProfile: async (newProfile: Partial<ProfileType>) => {
     const uid = useAuthStore.getState().uid;
     if (!uid) return;
 
     console.log("Updating profile:", newProfile);
+    
+    // If heygen key is exist and updated then set heygen key updated to true
+    const oldProfile = get().profile;
+    if("heygen_api_key" in newProfile && oldProfile?.heygen_api_key !== newProfile.heygen_api_key){
+      newProfile.heygen_key_updated = true;
+      set({ invalid_heygen_api_key: null });
+    }
 
     try {
       const userRef = doc(db, `users/${uid}/profile/userData`);
@@ -173,26 +187,26 @@ const useProfileStore = create<ProfileState>((set, get) => ({
   },
   fetchVoices: async () => {
 
-    // check key exist for voices
-    const profile = get().profile;
-    if (get().voices !== null || profile == null) {
-      return;
-    }
+    // // check key exist for voices
+    // const profile = get().profile;
+    // if (get().voices !== null || profile == null) {
+    //   return;
+    // }
 
-    // If not, then fetch audio list
-    const audioList = await getAudioList(profile.elevenlabs_api_key);
-    if ("error" in audioList && audioList.error) {
-      console.error("Error fetching audio list: ", audioList.error);
-      toast.error(audioList.error);
-      return;
-    }
+    // // If not, then fetch audio list
+    // const audioList = await getAudioList(profile.elevenlabs_api_key);
+    // if ("error" in audioList && audioList.error) {
+    //   console.error("Error fetching audio list: ", audioList.error);
+    //   toast.error(audioList.error);
+    //   return;
+    // }
 
-    if (audioList.status && Array.isArray(audioList.voices)) {
-      // set audio list in voices
-      set({ voices: audioList.voices });
-    } else {
-      set({ voices: null });
-    }
+    // if (audioList.status && Array.isArray(audioList.voices)) {
+    //   // set audio list in voices
+    //   set({ voices: audioList.voices });
+    // } else {
+    //   set({ voices: null });
+    // }
 
   }
 }));

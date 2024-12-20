@@ -17,6 +17,7 @@ export interface TalkingPhoto {
 }
 
 export type AvatarGroupType = 'PHOTO' | 'PUBLIC_PHOTO' | 'PUBLIC';
+export type AvatarGroupOwnerShipType = typeof OWNERSHIP_TYPE[number];
 export interface AvatarGroup {
   id: string;
   name: string;
@@ -25,7 +26,7 @@ export interface AvatarGroup {
   group_type: AvatarGroupType;
   created_at: number;
   owner: string;
-  type: typeof OWNERSHIP_TYPE[number];
+  type: AvatarGroupOwnerShipType;
 }
 
 export interface AvatarLook {
@@ -153,3 +154,5 @@ export interface HeyGenFailResponse {
   error: string;
   apiStatusCode?: number;
 }
+
+export type HeyGenErrorCode = "unauth-401";

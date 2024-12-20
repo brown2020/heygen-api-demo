@@ -61,7 +61,7 @@ export default function AvatarCard({ avatar, open }: AvatarCardProps) {
         // onClick={toggleFavorite}
         className="transition duration-300 absolute top-3 left-3 p-2 rounded-full"
       >
-        {false ? (
+        {/* {false ? (
           <svg
             className={`${
               false
@@ -100,7 +100,7 @@ export default function AvatarCard({ avatar, open }: AvatarCardProps) {
             </defs>
             <path fill="currentColor" d="M0 0h48v48H0z" mask="url(#ipTLike0)" />
           </svg>
-        )}
+        )} */}
       </button>
       {false ? (
         <button

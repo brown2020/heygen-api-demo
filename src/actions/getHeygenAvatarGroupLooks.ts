@@ -2,8 +2,9 @@
 
 import { HeyGenService } from "@/libs/HeyGenService";
 import { HeyGenFailResponse, ApiAvatarGroupDetailResponse } from "@/types/heygen";
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 import { addErrorReport } from "./addErrorReport";
+import { handleErrorGeneral } from "@/utils/server-utils/handleErrorGeneral";
 
 interface HeyGenAvatarGroupSuccessResponse {
   status: true;
@@ -23,8 +24,6 @@ export async function getHeygenAvatarGroupLooks(apiKey : string, avatarGroupId: 
 
     const response = await axios.request<ApiAvatarGroupDetailResponse>(config);
     if (response.data.error) {
-      console.log("|||||||||||||||||||||||||||||response.data.error", response.data.error);
-      
       console.error("Error from API:", response.data.error);
       const errorMessage = typeof response.data.error === "string" ? response.data.error : response.data.error.message;
       await addErrorReport("getHeygenAvatarGroupLooks", {errorMessage});
@@ -40,42 +39,6 @@ export async function getHeygenAvatarGroupLooks(apiKey : string, avatarGroupId: 
       data: response.data
     };
   } catch (error) {
-    /* eslint-disable @typescript-eslint/no-explicit-any */
-    let errorDetails: Record<string, any> = {avatarGroupId};
-    let responseCode: number = typeof error == "object" && error && "status" in error && typeof error.status == 'number' ? error.status : 0;
-    // Handle known types of error
-    if (error instanceof Error) {
-      errorDetails = {
-        ...errorDetails,
-        name: error.name,
-        message: error.message,
-        stack: error.stack || null,
-        cause : error.cause || null
-      };
-    } else if(error instanceof AxiosError) {
-      responseCode = error.status || 0;
-      errorDetails = {
-        ...errorDetails,
-        name: error.name,
-        message: error.message,
-        stack: error.stack || null,
-        cause : error.cause || null,
-        response: error.response?.data,
-      };
-    } else {
-      // For unknown errors
-      errorDetails = {
-        ...errorDetails,
-        message: "Error fetching Heygen avatar groups looks:",
-        raw: JSON.stringify(error), // Serialize the raw error
-      };
-    }
-    await addErrorReport("getHeygenAvatarGroupLooks", errorDetails);
-    console.error("Error fetching Heygen avatar groups looks:", errorDetails, error, responseCode);
-    return {
-      status: false,
-      error: "Error fetching Heygen avatar groups looks",
-      apiStatusCode: responseCode
-    };
+    return handleErrorGeneral("Error fetching Heygen avatar groups looks", "getHeygenAvatarGroupLooks", error, {avatarGroupId});
   }
 }
