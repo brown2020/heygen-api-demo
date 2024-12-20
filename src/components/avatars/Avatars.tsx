@@ -14,7 +14,7 @@ import { Modal } from "@nextui-org/modal";
 export default function Avatars() {
   const [showAvatarCardModel, setShowAvatarCardModel] = useState(false);
   const [showFavorites, setShowFavorites] = useState(false);
-  const { publicAvatarGroups, personalAvatarGroups, isFetchingAvatarGroups, changeSelectedGroup, selectedAvatarGroup, selectedAvatarLooks } = useAvatars();
+  const { publicAvatarGroups, personalAvatarGroups, isFetchingAvatarGroups, changeSelectedGroup, selectedAvatarGroup, selectedAvatarLooks, isFetchingAvatarLooks } = useAvatars();
 
   const showNotification = (message: string) => {
     toast.success(message, {
@@ -102,7 +102,7 @@ export default function Avatars() {
           </ul>
         </div>
         <Modal isOpen={showAvatarCardModel} size="5xl" onClose={() => {handleClose({status: false})}} scrollBehavior="inside">
-        {selectedAvatarGroup !== null ? <AvatarForm submit={handleClose} avatarDetail={selectedAvatarGroup} avatarLooks={selectedAvatarLooks} /> : <Fragment />}
+        {selectedAvatarGroup !== null ? <AvatarForm submit={handleClose} avatarDetail={selectedAvatarGroup} isFetchingAvatarLooks={isFetchingAvatarLooks} avatarLooks={selectedAvatarLooks} /> : <Fragment />}
       </Modal>
       </div>
     </div>

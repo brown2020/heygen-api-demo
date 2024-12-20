@@ -20,7 +20,7 @@ export const useAvatars = () => {
   const [selectedAvatarGroup, setSelectedAvatarGroup] = useState<AvatarGroup | null>(null);
   const [selectedAvatarLooks, setSelectedAvatarLooks] = useState<AvatarLook[]>([]);
   const [
-    // isFetchingAvatarLooks
+    isFetchingAvatarLooks
     , setIsFetchingAvatarLooks
   ] = useState(false);
 
@@ -110,5 +110,6 @@ export const useAvatars = () => {
     selectedAvatarGroup,
     changeSelectedGroup,
     selectedAvatarLooks,
+    isFetchingAvatarLooks
   }
 }

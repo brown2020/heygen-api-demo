@@ -9,10 +9,11 @@ import { ModalBody, ModalContent, ModalFooter, ModalHeader } from "@nextui-org/m
 import AvatarLookPreview from "./AvatarLookPreview";
 
 
-export default function AvatarForm({ avatarDetail, submit, avatarLooks }: {
+export default function AvatarForm({ avatarDetail, submit, avatarLooks, isFetchingAvatarLooks }: {
     submit: (val: { status: boolean }) => void,
     avatarDetail: AvatarGroup,
     avatarLooks: AvatarLook[],
+    isFetchingAvatarLooks: boolean
 }) {
     const { audioList: options } = useAudio();
     const [, setAudioOptions] = useState<Voice[]>(options);
@@ -36,6 +37,7 @@ export default function AvatarForm({ avatarDetail, submit, avatarLooks }: {
             <div className="flex justify-center flex-col items-center">
                 <div className="w-full bg-white transform rounded-lg transition-all">
                     <div className="flex xs:gap-5 max-xs:flex-col">
+                        {isFetchingAvatarLooks && <div>Loading...</div>}
                         {
                             !selectedLook &&
                             <div className="gap-2 grid grid-cols-2 sm:grid-cols-4 w-full">
