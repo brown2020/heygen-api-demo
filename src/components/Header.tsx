@@ -143,7 +143,7 @@ export default function Header() {
           <Link href="/profile">Profile</Link>
           <UserButton />
           </div> */}
-      <div className="flex items-center justify-between px-4 py-3 border-b shadow-md z-[999]">
+      <div className="flex items-center justify-between px-4 py-3 border-b shadow-md z-[9]">
         <Link href="/" className="font-medium text-xl">
           Heygen API Demo
         </Link>

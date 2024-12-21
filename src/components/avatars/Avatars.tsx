@@ -10,10 +10,12 @@ import toast from "react-hot-toast";
 import AvatarForm from "./AvatarForm";
 import { useAvatars } from "@/hooks/useAvatars";
 import { Modal } from "@nextui-org/modal";
+import CreateAvatarCard from "./CreateAvatarCard";
 
 export default function Avatars() {
   const [showAvatarCardModel, setShowAvatarCardModel] = useState(false);
   const { publicAvatarGroups, personalAvatarGroups, isFetchingAvatarGroups, changeSelectedGroup, selectedAvatarGroup, selectedAvatarLooks, isFetchingAvatarLooks, fetchAvatarGroupsFromHeygen } = useAvatars();
+  const [showCreateAvatarModal, setShowCreateAvatarModal] = useState(false);
 
   const showNotification = (message: string) => {
     toast.success(message, {
@@ -82,7 +84,7 @@ export default function Avatars() {
         <div>
         <h3 className="mb-3 text-lg font-semibold text-gray-600">My Avatars</h3>
           <ul className="grid min-[450px]:grid-cols-2 grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            <article onClick={createNewTalkingPhoto} className="group/avatar cursor-pointer relative border-2 border-gray-300 hover:drop-shadow-2xl transition-all hover:-translate-y-2 ease-in-out duration-300 isolate flex flex-col justify-end overflow-hidden rounded-2xl px-8 pb-8 pt-40 lg:pt-40 xl:pt-44 2xl:pt-52 mx-auto w-full">
+            <article onClick={() => {createNewTalkingPhoto(); setShowCreateAvatarModal(!showCreateAvatarModal)}} className="group/avatar cursor-pointer relative border-2 border-gray-300 hover:drop-shadow-2xl transition-all hover:-translate-y-2 ease-in-out duration-300 isolate flex flex-col justify-end overflow-hidden rounded-2xl px-8 pb-8 pt-40 lg:pt-40 xl:pt-44 2xl:pt-52 mx-auto w-full">
             <div className="absolute w-full h-full right-0 top-0 px-4 flex justify-center items-center">
                 <div>
                   <div className="border mx-auto w-fit rounded-full cursor-pointer p-2 bg-gray-300">
@@ -108,6 +110,9 @@ export default function Avatars() {
         </div>
         <Modal isOpen={showAvatarCardModel} size="5xl" onClose={() => {handleClose({status: false})}} scrollBehavior="inside">
         {selectedAvatarGroup !== null ? <AvatarForm submit={handleClose} avatarDetail={selectedAvatarGroup} isFetchingAvatarLooks={isFetchingAvatarLooks} avatarLooks={selectedAvatarLooks} /> : <Fragment />}
+      </Modal>
+      <Modal isOpen={showCreateAvatarModal} size="sm" onClose={() => {setShowCreateAvatarModal(!showCreateAvatarModal)}} scrollBehavior="inside">
+        <CreateAvatarCard handleClose={() => {setShowCreateAvatarModal(!showCreateAvatarModal)}} />
       </Modal>
       </div>
     </div>
