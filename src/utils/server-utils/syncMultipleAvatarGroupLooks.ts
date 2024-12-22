@@ -9,7 +9,7 @@ interface SyncMultipleAvatarGroupLooksResponse {
     notFoundAvatars: string[];
 }
 
-export async function syncMultipleAvatarGroupLooks(apiKey: string, heygenAvatarGroups: HeyGenAvatarGroup[], notFoundAvatarGroupsIds: string[]): Promise<SyncMultipleAvatarGroupLooksResponse | HeyGenFailResponse> {
+export async function syncMultipleAvatarGroupLooks(apiKey: string, heygenAvatarGroups: HeyGenAvatarGroup[], notFoundAvatarGroupsIds: string[], user_id: string | null = null): Promise<SyncMultipleAvatarGroupLooksResponse | HeyGenFailResponse> {
     const notFoundAvatars: string[] = [];
     for (const key in heygenAvatarGroups) {
         const avatarGroup = heygenAvatarGroups[key];
@@ -34,7 +34,7 @@ export async function syncMultipleAvatarGroupLooks(apiKey: string, heygenAvatarG
             return avatarGroupLooks;
         }
 
-        const syncResponse = await syncAvatarGroupLooks(newGroupId, avatarGroupLooks.data.data.avatar_list);
+        const syncResponse = await syncAvatarGroupLooks(newGroupId, avatarGroupLooks.data.data.avatar_list, user_id);
         if (!syncResponse.status) {
             return syncResponse;
         }

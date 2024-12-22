@@ -2,6 +2,7 @@
 import { fetchPersonalAvatarGroups } from "@/actions/fetchPersonalAvatarGroups";
 import { db } from "@/firebase/firebaseClient";
 import { AVATAR_GROUP_COLLECTION, AVATAR_GROUP_LOOK_COLLECTION, OWNERSHIP_TYPE } from "@/libs/constants";
+import { createUserAvatarId } from "@/libs/utils";
 import { AvatarGroup, AvatarLook } from "@/types/heygen";
 import { useAuthStore } from "@/zustand/useAuthStore";
 import useProfileStore from "@/zustand/useProfileStore";
@@ -92,7 +93,7 @@ export const useAvatars = () => {
     setIsFetchingAvatarLooks(true);
     const avatarGroupLooksCollection = query(
       collection(db, AVATAR_GROUP_LOOK_COLLECTION),
-      where('group_id', '==', selectedAvatarGroup.id),
+      selectedAvatarGroup.type == 'public' ? where('group_id', '==', selectedAvatarGroup.id): where('user_avatar_id', '==', createUserAvatarId(uid, selectedAvatarGroup.id)),
       orderBy('created_at', "desc"),
       limit(20)
     );

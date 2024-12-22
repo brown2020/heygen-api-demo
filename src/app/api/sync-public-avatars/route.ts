@@ -35,8 +35,9 @@ export const POST = async (
         const syncResponse = await syncAvatarGroups(publicGroups, {type: "public", owner: null});
 
         let notFoundAvatars: string[] = [];
-        if (syncResponse.withoutImageAvatarGroupIds.length > 0) {
-            const withoutImageAvatarGroups = publicGroups.filter(group => syncResponse.withoutImageAvatarGroupIds.includes(group.id));
+        const avatarGroupsIds = [...syncResponse.withoutImageAvatarGroupIds, ...syncResponse.newAvatarGroupIds];
+        if (avatarGroupsIds.length > 0) {
+            const withoutImageAvatarGroups = publicGroups.filter(group => avatarGroupsIds.includes(group.id));
             const syncMultipleAvatarGroupLooksResponse = await syncMultipleAvatarGroupLooks(apiKey, withoutImageAvatarGroups, notFoundAvatarGroupsIds);
             if(!syncMultipleAvatarGroupLooksResponse.status){
                 return new Response("Error syncing multiple avatar group looks", { status: 400 });

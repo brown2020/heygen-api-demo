@@ -31,7 +31,9 @@ export interface AvatarGroup {
 
 export interface AvatarLook {
   id: string;
+  look_id: string;
   group_id: string;
+  user_avatar_id: string; // `avatar_id~user_id`
   image_url: string;
   video_url?: string;
   is_motion?: boolean;

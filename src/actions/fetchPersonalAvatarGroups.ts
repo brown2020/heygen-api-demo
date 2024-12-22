@@ -35,7 +35,6 @@ export async function fetchPersonalAvatarGroups(apiKey: string): Promise<HeyGenF
     const personalGroups = avatarGroupList.data.data.avatar_group_list
         .filter(group => !group.group_type.toLowerCase().includes("public"));
 
-
     // Sync list with avatar groups store in collection
     const syncResponse = await syncAvatarGroups(personalGroups, { type: "personal", owner: userId });
     
@@ -44,7 +43,7 @@ export async function fetchPersonalAvatarGroups(apiKey: string): Promise<HeyGenF
         const withoutImageAvatarGroups = personalGroups.filter(group => avatarGroupsIds.includes(group.id));
         
         // Sync avatar group looks
-        const syncMultipleAvatarGroupLooksResponse = await syncMultipleAvatarGroupLooks(apiKey, withoutImageAvatarGroups, []);
+        const syncMultipleAvatarGroupLooksResponse = await syncMultipleAvatarGroupLooks(apiKey, withoutImageAvatarGroups, [], userId);
         if(!syncMultipleAvatarGroupLooksResponse.status){
             return syncMultipleAvatarGroupLooksResponse;
         }

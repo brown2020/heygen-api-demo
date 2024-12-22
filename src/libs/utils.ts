@@ -67,26 +67,51 @@ export const cleanObject = (obj: Record<string, any>) => {
     return obj;
 }
 
-export const getAvatarLook = (heyGenAvatarGroupLook: HeyGenAvatarGroupLook, group_id: string): AvatarLook => {
+export const getAvatarLook = (heyGenAvatarGroupLook: HeyGenAvatarGroupLook, group_id: string, user_id: string | null = null): AvatarLook => {
+    console.log("USer ID", user_id);
+    
     if("id" in heyGenAvatarGroupLook){
         return {
             id: heyGenAvatarGroupLook.id,
+            look_id: heyGenAvatarGroupLook.id,
             created_at: heyGenAvatarGroupLook.created_at,
             image_url: heyGenAvatarGroupLook.image_url,
             is_motion: heyGenAvatarGroupLook.is_motion,
             motion_preview_url: heyGenAvatarGroupLook.motion_preview_url,
             name: heyGenAvatarGroupLook.name,
             group_id,
+            user_avatar_id: createUserAvatarId(user_id, group_id)
         };
     }else{
         return {
             id: heyGenAvatarGroupLook.avatar_id,
+            look_id: heyGenAvatarGroupLook.avatar_id,
             created_at: 0,
             image_url: heyGenAvatarGroupLook.preview_image_url,
             is_motion: true,
             motion_preview_url: heyGenAvatarGroupLook.preview_video_url,
             name: heyGenAvatarGroupLook.avatar_name,
-            group_id
+            group_id,
+            user_avatar_id: createUserAvatarId(user_id, group_id)
         }
     }
+}
+
+/**
+ * there was problem storing avatar for user
+ * when two user have same heygen account and make fetch request
+ * we were making avatar groups only by avatar id
+ * but how our avatar id is combination of (avatarID~userID)
+ * @param user_avatar_id 
+ */
+export const extractAvatarID = (user_avatar_id: string) => {
+    return user_avatar_id.split("~")[0].trim();
+}
+export const extractUserID = (user_avatar_id: string) => {
+    const user_avatar_split_id = user_avatar_id.split("~");
+    return user_avatar_split_id.length > 1 ? user_avatar_split_id[1].trim() : '';
+}
+
+export const createUserAvatarId = (user_id: string | null, avatar_id: string) => {
+    return user_id ? `${avatar_id}~${user_id}` : `${avatar_id}`   
 }
