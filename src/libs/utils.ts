@@ -68,8 +68,6 @@ export const cleanObject = (obj: Record<string, any>) => {
 }
 
 export const getAvatarLook = (heyGenAvatarGroupLook: HeyGenAvatarGroupLook, group_id: string, user_id: string | null = null): AvatarLook => {
-    console.log("USer ID", user_id);
-    
     if("id" in heyGenAvatarGroupLook){
         return {
             id: heyGenAvatarGroupLook.id,

@@ -150,11 +150,19 @@ export interface ApiAvatarGroupDetailResponse {
   }
 }
 
+export interface ApiUploadTalkingPhotoResponse {
+  data: {
+    talking_photo_id: string;
+    talking_photo_url: string;
+  }
+}
+
 
 export interface HeyGenFailResponse {
   status: false;
   error: string;
   apiStatusCode?: number;
+  displayMessage?: string;
 }
 
 export type HeyGenErrorCode = "unauth-401";

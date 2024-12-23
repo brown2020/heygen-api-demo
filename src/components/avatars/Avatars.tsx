@@ -111,9 +111,8 @@ export default function Avatars() {
         <Modal isOpen={showAvatarCardModel} size="5xl" onClose={() => {handleClose({status: false})}} scrollBehavior="inside">
         {selectedAvatarGroup !== null ? <AvatarForm submit={handleClose} avatarDetail={selectedAvatarGroup} isFetchingAvatarLooks={isFetchingAvatarLooks} avatarLooks={selectedAvatarLooks} /> : <Fragment />}
       </Modal>
-      <Modal isOpen={showCreateAvatarModal} size="sm" onClose={() => {setShowCreateAvatarModal(!showCreateAvatarModal)}} scrollBehavior="inside">
-        <CreateAvatarCard handleClose={() => {setShowCreateAvatarModal(!showCreateAvatarModal)}} />
-      </Modal>
+      
+      <CreateAvatarCard create={showCreateAvatarModal} handleClose={() => {setShowCreateAvatarModal(!showCreateAvatarModal)}} />
       </div>
     </div>
   )

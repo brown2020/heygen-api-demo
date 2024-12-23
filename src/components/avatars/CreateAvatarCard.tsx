@@ -1,12 +1,15 @@
+"use client";
 import { getFileUrl } from "@/actions/getFileUrl";
 import { resizeImage } from "@/utils/resizeImage";
 import { useAuthStore } from "@/zustand/useAuthStore";
-import { ModalBody, ModalContent, ModalFooter, ModalHeader } from "@nextui-org/modal";
+import { Modal, ModalBody, ModalContent, ModalFooter, ModalHeader } from "@nextui-org/modal";
 import { storage } from "@/firebase/firebaseClient";
 import { ref, uploadBytes } from "firebase/storage";
 import { CloudUpload } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import { HeyGenService } from "@/libs/HeyGenService";
+import { useHeyGen } from "@/hooks/useHeyGen";
 
 interface CreateAvatarCardProps {
     handleClose: () => void;
@@ -17,24 +20,14 @@ export default function CreateAvatarCard({ handleClose, create = true }: CreateA
     const [avatarPhoto, setAvatarPhoto] = useState<string | null>(null);
     const [isDragging, setIsDragging] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const [currentStep, setCurrentStep] = useState(1);
-    const [stepCompleted, setStepCompleted] = useState([
-        { step: 1, completed: false },
-        { step: 2, completed: false },
-        { step: 3, completed: false },
-    ]);
     const uid = useAuthStore((state) => state.uid);
-    const [avatarId, setAvatarId] = useState<string>("");
+    const imageRef = useRef<HTMLImageElement | null>(null);
+    const [file, setFile] = useState<File | null>(null);
+    const [UploadPreview, setUploadPreview] = useState("");
+    const { isUploading, uploadTalkingPhoto } = useHeyGen();
 
     const MAX_FILE_SIZE_MB = 2;
     const VALID_IMAGE_TYPES = ["image/png", "image/jpg", "image/jpeg", "image/webp"];
-
-    useEffect(() => {
-        if (create) {
-            const _avatarId = `new-${Date.now()}`;
-            setAvatarId(_avatarId);
-        }
-    }, [create]);
 
     const validateFile = (file: File) => {
         if (!VALID_IMAGE_TYPES.includes(file.type)) {
@@ -48,7 +41,7 @@ export default function CreateAvatarCard({ handleClose, create = true }: CreateA
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
-            await handleUploadImage(e.target.files);
+            await handleChangeImage(e.target.files);
         }
     }
 
@@ -65,15 +58,15 @@ export default function CreateAvatarCard({ handleClose, create = true }: CreateA
         e.preventDefault();
         setIsDragging(false);
         if (e.dataTransfer.files) {
-            await handleUploadImage(e.dataTransfer.files);
+            await handleChangeImage(e.dataTransfer.files);
         }
         setIsLoading(false);
     };
 
-    const handleUploadImage = async (files: FileList) => {
+    const handleChangeImage = async (files: FileList) => {
         setIsLoading(true);
-        const file = files[0];
-        const validationError = validateFile(file);
+        const _file = files[0];
+        const validationError = validateFile(_file);
 
         if (validationError) {
             toast.error(validationError);
@@ -81,33 +74,20 @@ export default function CreateAvatarCard({ handleClose, create = true }: CreateA
             return;
         }
 
-        const id = avatarId;
-        const resizedImage = await resizeImage(file);
-        const filePath = `images/${uid}/${id}/${file.name}`;
-        const storageRef = ref(storage, filePath);
+        if (_file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                setUploadPreview(e.target?.result as string)
+            };
+            reader.readAsDataURL(_file);
+            setFile(_file);
+        }
 
-        await uploadBytes(storageRef, resizedImage);
-
-        const url = await getFileUrl(filePath)
-        setAvatarPhoto(url);
-        completedStep(1);
         setIsLoading(false);
     }
 
-    const completedStep = (number: number) => {
-        setStepCompleted((prevStepCompleted) => {
-            return prevStepCompleted.map((step, index) => 
-                index === number - 1 ? { ...step, completed: true } : step
-            );
-        });
-    }
-
-    const handleNextStep = () => {
-        setCurrentStep((prevStep) => (prevStep < 3 ? prevStep + 1 : prevStep));
-    };
-
     const renderStepContent = () => {
-        if (currentStep === 1) {
+        if (file == null) {
             return (
                 <div
                     onDragOver={handleDragOver}
@@ -150,73 +130,83 @@ export default function CreateAvatarCard({ handleClose, create = true }: CreateA
 
                 </div>
             );
-        } else if (currentStep === 2) {
-            return avatarPhoto ? (
-                <div className="text-center">
-                    <h3 className="text-lg font-semibold">Uploaded Photo</h3>
-                    <img src={avatarPhoto} alt="Avatar Preview" className="w-24 h-24 rounded-full mx-auto mt-4" />
-                    <p className="text-sm mt-2 text-gray-600">If this looks good, proceed to the next step.</p>
-                </div>
-            ) : (
-                <p className="text-center text-gray-600">No photo uploaded yet.</p>
-            );
-        } else if (currentStep === 3) {
-            return (
-                <div className="text-center">
-                    <h3 className="text-lg font-semibold">Ready to Save Your Avatar</h3>
-                    <p className="text-sm text-gray-600 mt-2">Click Close to finish the process.</p>
-                </div>
-            );
+        } else {
+            return <div className="text-center">
+                <h3 className="text-lg font-semibold">Uploaded Photo</h3>
+                {
+                    UploadPreview &&
+                    <img src={UploadPreview} alt="Avatar Preview" className="max-w-full max-h-[40vh] mx-auto mt-4" />
+                }
+                <p className="text-sm mt-2 text-gray-600">If this looks good, proceed to the next step.</p>
+            </div>
         }
     };
 
+    const handleUploadImage = useCallback(async () => {
+        if (!file || !UploadPreview) {
+            toast.error("No file selected.");
+            return;
+        }
+
+        const response = await uploadTalkingPhoto(UploadPreview);
+        console.log(response);
+        
+
+    }, [file, UploadPreview])
+
+    const handleCloseModal = useCallback(() => {
+        if(isUploading) return;
+
+        setFile(null);
+        setUploadPreview("");
+        handleClose();
+    }, [isUploading])
+
     return (
-        <ModalContent>
-            <ModalHeader className="flex flex-col gap-2">
-                <h2 className="text-xl md:text-xl font-semibold">
-                    {currentStep === 1
-                        ? "Upload Photos of Your Avatar"
-                        : currentStep === 2
-                            ? "Review Uploads"
-                            : "Save Avatar"}
-                </h2>
-                <div className="text-xs text-gray-600 font-light">
-                    {currentStep === 1
-                        ? "Upload photos to create multiple looks for your avatar."
-                        : currentStep === 2
-                            ? "Review the uploaded photos and finalize your avatar look."
-                            : "Save your avatar to use it in different applications."}
-                </div>
-            </ModalHeader>
+        <Modal isOpen={create} size="sm" scrollBehavior="inside" onClose={() => handleCloseModal()}>
+            <ModalContent>
+                <ModalHeader className="flex flex-col gap-2">
+                    <h2 className="text-xl md:text-xl font-semibold">
+                        {file == null
+                            ? "Upload Photos of Your Avatar"
+                            : "Review Uploads"}
+                    </h2>
+                    <div className="text-xs text-gray-600 font-light">
+                        {file == null
+                            ? "Upload photos to create multiple looks for your avatar."
+                            : "Review the uploaded photos and finalize your avatar look."}
+                    </div>
+                </ModalHeader>
 
-            <ModalBody>{renderStepContent()}</ModalBody>
+                <ModalBody>{renderStepContent()}</ModalBody>
 
-            <ModalFooter className="flex justify-between gap-4 mt-4 md:mt-6">
-                {currentStep == 1 ? (
-                    <button
+                <ModalFooter className="flex justify-between gap-4 mt-4 md:mt-6">
+
+                    {file == null ? <button
                         className="font-medium py-2 px-7 rounded-xl border border-gray-300 hover:bg-gray-100 transition"
-                        onClick={() => handleClose()}
+                        onClick={() => handleCloseModal()}
                     >
                         Close
-                    </button>) : (
-                    <button
-                        className="font-medium py-2 px-7 rounded-xl border border-gray-300 hover:bg-gray-100 transition"
-                        onClick={() => setCurrentStep(1)}
-                    >
-                        Back
-                    </button>
-                )
-                }
-                {currentStep < 3 && (
-                    <button
-                    disabled={ !stepCompleted[currentStep - 1].completed }
-                        className={`font-medium ${!stepCompleted[currentStep - 1].completed && 'opacity-40'} py-2 px-7 rounded-xl bg-gray-300 hover:bg-gray-400 transition`}
-                        onClick={handleNextStep}
-                    >
-                        Next
-                    </button>
-                )}
-            </ModalFooter>
-        </ModalContent>
+                    </button> : (
+                        <>
+                            <button
+                                disabled={isUploading}
+                                className={`font-medium py-2 px-7 disabled:cursor-not-allowed rounded-xl bg-gray-300 hover:bg-gray-400 transition`}
+                                onClick={() => setFile(null)}
+                            >
+                               Change
+                            </button>
+                            <button
+                                disabled={isUploading}
+                                onClick={() => {handleUploadImage()}}
+                                className={`font-medium py-2 px-7 rounded-xl disabled:cursor-not-allowed bg-orange-700 hover:bg-orange-600 text-white transition`}
+                            >
+                                Upload
+                            </button>
+                        </>
+                    )}
+                </ModalFooter>
+            </ModalContent>
+        </Modal>
     );
 }

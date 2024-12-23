@@ -9,6 +9,7 @@ import useProfileStore from "@/zustand/useProfileStore";
 import { collection, limit, onSnapshot, orderBy, query, where } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { useHeyGen } from "./useHeyGen";
 
 export const useAvatars = () => {
   const [personalAvatarGroups, setPersonalAvatarGroups] = useState<AvatarGroup[]>([]);
@@ -20,13 +21,13 @@ export const useAvatars = () => {
   const [selectedAvatarLooks, setSelectedAvatarLooks] = useState<AvatarLook[]>([]);
   const [isFetchingAvatarLooks, setIsFetchingAvatarLooks] = useState(false);
 
-  const [isFetchingAvatarGroupsFromHeygen, setIsFetchingAvatarGroupsFromHeygen] = useState(false);
-
   const uid = useAuthStore((state) => state.uid);
   const profile = useProfileStore((state) => state.profile);
   const updateProfile = useProfileStore((state) => state.updateProfile);
   const invalid_heygen_api_key = useProfileStore((state) => state.invalid_heygen_api_key);
   const updateHeyGenApiKeyCode = useProfileStore((state) => state.updateHeyGenApiKeyCode);
+
+  const { isFetchingAvatarGroupsFromHeygen, fetchAvatarGroupsFromHeygen } = useHeyGen();
 
   const _profile = useMemo(() => {
     return profile ? {
@@ -42,7 +43,7 @@ export const useAvatars = () => {
     if (!uid || !_profile.heygen_api_key || invalid_heygen_api_key != null) return;
 
     setIsFetchingPersonalAvatarGroups(true);
-    
+
     const personalAvatarGroupsCollection = query(
       collection(db, AVATAR_GROUP_COLLECTION),
       where('type', '==', OWNERSHIP_TYPE[1]),
@@ -55,7 +56,7 @@ export const useAvatars = () => {
         const avatarGroupsList = snapshot.docs.map(
           (doc) => doc.data() as AvatarGroup
         );
-        if(avatarGroupsList.length == 0 || _profile.heygen_key_updated){
+        if (avatarGroupsList.length == 0 || _profile.heygen_key_updated) {
           fetchAvatarGroupsFromHeygen();
         }
         setPersonalAvatarGroups(avatarGroupsList);
@@ -93,7 +94,7 @@ export const useAvatars = () => {
     setIsFetchingAvatarLooks(true);
     const avatarGroupLooksCollection = query(
       collection(db, AVATAR_GROUP_LOOK_COLLECTION),
-      selectedAvatarGroup.type == 'public' ? where('group_id', '==', selectedAvatarGroup.id): where('user_avatar_id', '==', createUserAvatarId(uid, selectedAvatarGroup.id)),
+      selectedAvatarGroup.type == 'public' ? where('group_id', '==', selectedAvatarGroup.id) : where('user_avatar_id', '==', createUserAvatarId(uid, selectedAvatarGroup.id)),
       orderBy('created_at', "desc"),
       limit(20)
     );
@@ -104,6 +105,9 @@ export const useAvatars = () => {
         const avatarGroupLooksList = snapshot.docs.map(
           (doc) => doc.data() as AvatarLook
         );
+        if(avatarGroupLooksList.length == 0){
+          fetchAvatarGroupsFromHeygen(selectedAvatarGroup.id);
+        }
         setSelectedAvatarLooks(avatarGroupLooksList);
       }
     );
@@ -121,32 +125,6 @@ export const useAvatars = () => {
     setSelectedAvatarGroup(_avatarGroup);
     setSelectedAvatarLooks([]);
   }
-
-  const fetchAvatarGroupsFromHeygen = useCallback(async () => {
-    if(isFetchingAvatarGroupsFromHeygen || !_profile.heygen_api_key) return;
-
-    toast.promise(new Promise(async (resolve, rejects) => {
-      setIsFetchingAvatarGroupsFromHeygen(true);
-      updateProfile({ heygen_key_updated: false });
-      const response = await fetchPersonalAvatarGroups(_profile.heygen_api_key);
-      if(!response.status){
-        if(response.apiStatusCode == 401){
-          updateHeyGenApiKeyCode('unauth-401')
-        }
-        rejects(false)
-      }else{
-        updateHeyGenApiKeyCode(null)
-        resolve(true)
-      }
-
-      setIsFetchingAvatarGroupsFromHeygen(false);
-    }), {
-      loading: 'Fetching your avatars from Heygen...',
-      success: 'Success',
-      error: 'Error when fetching avatar list',
-    });
-
-  }, [_profile, isFetchingAvatarGroupsFromHeygen])
 
   return {
     isFetchingAvatarGroupsFromHeygen,

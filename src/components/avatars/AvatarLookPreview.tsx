@@ -13,7 +13,7 @@ export default function AvatarLookPreview({ avatarLook }: { avatarLook: AvatarLo
             <source className="w-[95%]" src={avatarLook.motion_preview_url} type="video/mp4" />
         </video>
         }
-        return <Image className="h-[50vh] max-w-full text-center" src={avatarLook.image_url} />
+        return <Image className="max-h-[50vh] max-w-full text-center" src={avatarLook.image_url} />
     }, [avatarLook])
 
     useEffect(() => {

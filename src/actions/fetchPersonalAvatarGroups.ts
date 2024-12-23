@@ -21,7 +21,7 @@ interface FetchPersonalAvatarGroupsResponse {
  * 
  * @param apiKey 
  */
-export async function fetchPersonalAvatarGroups(apiKey: string): Promise<HeyGenFailResponse | FetchPersonalAvatarGroupsResponse> {
+export async function fetchPersonalAvatarGroups(apiKey: string, avatarGroupId: string | null = null): Promise<HeyGenFailResponse | FetchPersonalAvatarGroupsResponse> {
     const { userId } = await auth.protect();
 
     // Get list of personal avatars group from heygen
@@ -32,13 +32,22 @@ export async function fetchPersonalAvatarGroups(apiKey: string): Promise<HeyGenF
     }
 
     // Create get only non public groups
-    const personalGroups = avatarGroupList.data.data.avatar_group_list
+    let personalGroups = avatarGroupList.data.data.avatar_group_list
         .filter(group => !group.group_type.toLowerCase().includes("public"));
 
+    if (avatarGroupId) {
+        personalGroups = personalGroups.filter(group => group.id === avatarGroupId);
+    }
+
     // Sync list with avatar groups store in collection
-    const syncResponse = await syncAvatarGroups(personalGroups, { type: "personal", owner: userId });
+    const syncResponse = await syncAvatarGroups(personalGroups, { type: "personal", owner: userId }, avatarGroupId ? false : true);
     
-    const avatarGroupsIds = [...syncResponse.withoutImageAvatarGroupIds, ...syncResponse.newAvatarGroupIds];
+    let avatarGroupsIds = [...syncResponse.withoutImageAvatarGroupIds, ...syncResponse.newAvatarGroupIds];
+
+    if(avatarGroupId){
+        avatarGroupsIds = [avatarGroupId];
+    }
+
     if(avatarGroupsIds.length > 0){
         const withoutImageAvatarGroups = personalGroups.filter(group => avatarGroupsIds.includes(group.id));
         

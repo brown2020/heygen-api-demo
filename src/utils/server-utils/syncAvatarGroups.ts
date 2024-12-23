@@ -13,7 +13,7 @@ interface PersonalOwnerShipDetail {
     owner: string;
 }
 
-export async function syncAvatarGroups(heygenAvatarGroups: HeyGenAvatarGroup[], ownershipDetail: PublicOwnerShipDetail | PersonalOwnerShipDetail) {
+export async function syncAvatarGroups(heygenAvatarGroups: HeyGenAvatarGroup[], ownershipDetail: PublicOwnerShipDetail | PersonalOwnerShipDetail, shouldDelete = true) {
     // Get list of all  Avatars exist in our database
     let avatarGroupsRef = adminDb.collection(AVATAR_GROUP_COLLECTION)
         .where('type', '==', ownershipDetail.type);
@@ -50,25 +50,27 @@ export async function syncAvatarGroups(heygenAvatarGroups: HeyGenAvatarGroup[], 
         }
     }
 
-    // Create list of deleted Avatars
-    const deletedAvatarGroupIds = existingAvatarGroupIds.filter(id => !allGroupIds.includes(id));
-    if (deletedAvatarGroupIds.length > 0) {
-        const batch = adminDb.batch();
-        avatarGroupsSnapshot.docs.forEach(async (doc) => {
-            if (deletedAvatarGroupIds.includes(extractAvatarID(doc.id))) {
-                batch.delete(doc.ref);
-            }
-        });
-        // Delete all those avatar groups from our database
-        await batch.commit();
-
-        // remove all avatar looks from the deleted groups
-        const avatarLooksSnapshot = await adminDb.collection(AVATAR_GROUP_LOOK_COLLECTION).where('group_id', 'in', deletedAvatarGroupIds).get();
-        const batchLooks = adminDb.batch();
-        avatarLooksSnapshot.docs.forEach(async (doc) => {
-            batchLooks.delete(doc.ref);
-        });
-        await batchLooks.commit();
+    if(shouldDelete){
+        // Create list of deleted Avatars
+        const deletedAvatarGroupIds = existingAvatarGroupIds.filter(id => !allGroupIds.includes(id));
+        if (deletedAvatarGroupIds.length > 0) {
+            const batch = adminDb.batch();
+            avatarGroupsSnapshot.docs.forEach(async (doc) => {
+                if (deletedAvatarGroupIds.includes(extractAvatarID(doc.id))) {
+                    batch.delete(doc.ref);
+                }
+            });
+            // Delete all those avatar groups from our database
+            await batch.commit();
+    
+            // remove all avatar looks from the deleted groups
+            const avatarLooksSnapshot = await adminDb.collection(AVATAR_GROUP_LOOK_COLLECTION).where('group_id', 'in', deletedAvatarGroupIds).get();
+            const batchLooks = adminDb.batch();
+            avatarLooksSnapshot.docs.forEach(async (doc) => {
+                batchLooks.delete(doc.ref);
+            });
+            await batchLooks.commit();
+        }
     }
 
     // List all avatar group which does not have preview image
