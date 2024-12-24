@@ -1,13 +1,12 @@
 "use server";
 import { HeyGenService } from "@/libs/HeyGenService";
-import { ApiAvatarGroupResponse, ApiUploadTalkingPhotoResponse, HeyGenFailResponse } from "@/types/heygen";
+import { ApiUploadTalkingPhotoResponse, HeyGenFailResponse } from "@/types/heygen";
 import { heyGenHeaders } from "@/utils/heyGenHeaders";
-import { handleErrorGeneral } from "@/utils/server-utils/handleErrorGeneral";
 import { handleHeyGenError } from "@/utils/server-utils/handleHeyGenError";
 import { auth } from "@clerk/nextjs/server";
 import axios from "axios";
 
-export const uploadTalkingPhoto = async (apiKey: string, base64Image: string, ): Promise<ApiUploadTalkingPhotoResponse | HeyGenFailResponse> => {
+export const uploadTalkingPhoto = async (apiKey: string, base64Image: string, fileName: string): Promise<ApiUploadTalkingPhotoResponse | HeyGenFailResponse> => {
     const { userId } = await auth.protect();
 
     try {
@@ -17,7 +16,6 @@ export const uploadTalkingPhoto = async (apiKey: string, base64Image: string, ):
                 throw new Error('Invalid Base64 string');
             }
 
-            const mimeType = matches[1]; // e.g., 'image/png'
             const base64Data = matches[2];
 
             // Decode the Base64 data
@@ -33,7 +31,7 @@ export const uploadTalkingPhoto = async (apiKey: string, base64Image: string, ):
         //   );
         //   const arrayBuffer = responseBuffer.data;
           const blob = new Blob([arrayBuffer])
-          const _file = new File([blob], 'first.png', { type: blob.type });
+          const _file = new File([blob], fileName, { type: blob.type });
 
         
         const response = await axios.post<ApiUploadTalkingPhotoResponse>(HeyGenService.endpoints.upload_talking_photo, _file, { headers: heyGenHeaders(apiKey) });

@@ -60,7 +60,7 @@ export default function Avatars() {
         <div className="flex justify-between items-center">
           <div className="flex gap-2 max-xs:justify-between w-full">
             <button
-              onClick={fetchAvatarGroupsFromHeygen}
+              onClick={() => { fetchAvatarGroupsFromHeygen() }}
               className="bg-gray-200 text-gray-700 max-xs:text-sm px-3 py-2 rounded-md"
             >
               Fetch Avatars
@@ -82,10 +82,10 @@ export default function Avatars() {
       </div>
       <div className="p-4 flex flex-col gap-4 w-full">
         <div>
-        <h3 className="mb-3 text-lg font-semibold text-gray-600">My Avatars</h3>
+          <h3 className="mb-3 text-lg font-semibold text-gray-600">My Avatars</h3>
           <ul className="grid min-[450px]:grid-cols-2 grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            <article onClick={() => {createNewTalkingPhoto(); setShowCreateAvatarModal(!showCreateAvatarModal)}} className="group/avatar cursor-pointer relative border-2 border-gray-300 hover:drop-shadow-2xl transition-all hover:-translate-y-2 ease-in-out duration-300 isolate flex flex-col justify-end overflow-hidden rounded-2xl px-8 pb-8 pt-40 lg:pt-40 xl:pt-44 2xl:pt-52 mx-auto w-full">
-            <div className="absolute w-full h-full right-0 top-0 px-4 flex justify-center items-center">
+            <article onClick={() => { createNewTalkingPhoto(); setShowCreateAvatarModal(!showCreateAvatarModal) }} className="group/avatar cursor-pointer relative border-2 border-gray-300 hover:drop-shadow-2xl transition-all hover:-translate-y-2 ease-in-out duration-300 isolate flex flex-col justify-end overflow-hidden rounded-2xl px-8 pb-8 pt-40 lg:pt-40 xl:pt-44 2xl:pt-52 mx-auto w-full">
+              <div className="absolute w-full h-full right-0 top-0 px-4 flex justify-center items-center">
                 <div>
                   <div className="border mx-auto w-fit rounded-full cursor-pointer p-2 bg-gray-300">
                     <Plus size={24} className="text-gray-600" />
@@ -95,7 +95,7 @@ export default function Avatars() {
               </div>
             </article>
             {personalAvatarGroups.map((avatar, index) => (
-              <AvatarCard open={() => {openForm(avatar)}} avatar={avatar} type="talking_photo" key={index} id={avatar.id} />
+              <AvatarCard open={() => { openForm(avatar) }} avatar={avatar} type="talking_photo" key={index} id={avatar.id} />
             ))}
           </ul>
         </div>
@@ -104,15 +104,18 @@ export default function Avatars() {
           {isFetchingAvatarGroups && <p>Loading...</p>}
           <ul className="grid min-[450px]:grid-cols-2 grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {publicAvatarGroups.map((avatar, index) => (
-              <AvatarCard open={() => {openForm(avatar)}} avatar={avatar} type="talking_photo" key={index} id={avatar.id} />
+              <AvatarCard open={() => { openForm(avatar) }} avatar={avatar} type="talking_photo" key={index} id={avatar.id} />
             ))}
           </ul>
         </div>
-        <Modal isOpen={showAvatarCardModel} size="5xl" onClose={() => {handleClose({status: false})}} scrollBehavior="inside">
-        {selectedAvatarGroup !== null ? <AvatarForm submit={handleClose} avatarDetail={selectedAvatarGroup} isFetchingAvatarLooks={isFetchingAvatarLooks} avatarLooks={selectedAvatarLooks} /> : <Fragment />}
-      </Modal>
-      
-      <CreateAvatarCard create={showCreateAvatarModal} handleClose={() => {setShowCreateAvatarModal(!showCreateAvatarModal)}} />
+        <Modal isOpen={showAvatarCardModel} size="5xl" onClose={() => { handleClose({ status: false }) }} scrollBehavior="inside">
+          {selectedAvatarGroup !== null ? <AvatarForm submit={handleClose} avatarDetail={selectedAvatarGroup} isFetchingAvatarLooks={isFetchingAvatarLooks} avatarLooks={selectedAvatarLooks} /> : <Fragment />}
+        </Modal>
+
+        <CreateAvatarCard create={showCreateAvatarModal} handleClose={() => {
+          console.log("Close ift  asd asdisUploading", showCreateAvatarModal);
+          setShowCreateAvatarModal(!showCreateAvatarModal)
+        }} />
       </div>
     </div>
   )

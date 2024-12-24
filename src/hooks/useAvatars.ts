@@ -1,5 +1,4 @@
 "use client";
-import { fetchPersonalAvatarGroups } from "@/actions/fetchPersonalAvatarGroups";
 import { db } from "@/firebase/firebaseClient";
 import { AVATAR_GROUP_COLLECTION, AVATAR_GROUP_LOOK_COLLECTION, OWNERSHIP_TYPE } from "@/libs/constants";
 import { createUserAvatarId } from "@/libs/utils";
@@ -7,8 +6,7 @@ import { AvatarGroup, AvatarLook } from "@/types/heygen";
 import { useAuthStore } from "@/zustand/useAuthStore";
 import useProfileStore from "@/zustand/useProfileStore";
 import { collection, limit, onSnapshot, orderBy, query, where } from "firebase/firestore";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import toast from "react-hot-toast";
+import { useEffect, useMemo, useState } from "react";
 import { useHeyGen } from "./useHeyGen";
 
 export const useAvatars = () => {
@@ -23,9 +21,7 @@ export const useAvatars = () => {
 
   const uid = useAuthStore((state) => state.uid);
   const profile = useProfileStore((state) => state.profile);
-  const updateProfile = useProfileStore((state) => state.updateProfile);
   const invalid_heygen_api_key = useProfileStore((state) => state.invalid_heygen_api_key);
-  const updateHeyGenApiKeyCode = useProfileStore((state) => state.updateHeyGenApiKeyCode);
 
   const { isFetchingAvatarGroupsFromHeygen, fetchAvatarGroupsFromHeygen } = useHeyGen();
 

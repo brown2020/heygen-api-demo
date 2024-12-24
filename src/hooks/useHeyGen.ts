@@ -1,7 +1,6 @@
 "use client";
 import { fetchPersonalAvatarGroups } from "@/actions/fetchPersonalAvatarGroups";
 import { uploadTalkingPhoto } from "@/actions/uploadTalkingPhoto";
-import { HeyGenService } from "@/libs/HeyGenService";
 import useProfileStore from "@/zustand/useProfileStore";
 import { useCallback, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -23,18 +22,21 @@ export const useHeyGen = () => {
     }, [profile]);
 
 
-    const uploadPhoto = useCallback(async (base64File: string) => {
-        if (isUploading || !_profile.heygen_api_key) return;
+    const uploadPhoto = useCallback(async (base64File: string, fileName: string) => {
+        if (isUploading || !_profile.heygen_api_key) return { status: false };
 
         setIsUploading(true);
-        const response = await uploadTalkingPhoto(_profile.heygen_api_key, base64File);
+        const response = await uploadTalkingPhoto(_profile.heygen_api_key, base64File, fileName);
         if ("error" in response) {
             if ("displayMessage" in response && response.displayMessage) toast.error(response.displayMessage);
+            setIsUploading(false);
+            return { status: false }
         } else {
             toast.success("Photo uploaded successfully");
+            await fetchAvatarGroupsFromHeygen(response.data.talking_photo_id);
+            setIsUploading(false);
+            return { status: true }
         }
-
-        setIsUploading(false);
 
     }, [isUploading, _profile]);
 

@@ -1,27 +1,18 @@
 "use client";
-import { getFileUrl } from "@/actions/getFileUrl";
-import { resizeImage } from "@/utils/resizeImage";
-import { useAuthStore } from "@/zustand/useAuthStore";
 import { Modal, ModalBody, ModalContent, ModalFooter, ModalHeader } from "@nextui-org/modal";
-import { storage } from "@/firebase/firebaseClient";
-import { ref, uploadBytes } from "firebase/storage";
 import { CloudUpload } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import toast from "react-hot-toast";
-import { HeyGenService } from "@/libs/HeyGenService";
 import { useHeyGen } from "@/hooks/useHeyGen";
 
 interface CreateAvatarCardProps {
     handleClose: () => void;
-    create?: boolean;
+    create: boolean;
 }
 
-export default function CreateAvatarCard({ handleClose, create = true }: CreateAvatarCardProps) {
-    const [avatarPhoto, setAvatarPhoto] = useState<string | null>(null);
+export default function CreateAvatarCard({ handleClose, create }: CreateAvatarCardProps) {
     const [isDragging, setIsDragging] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const uid = useAuthStore((state) => state.uid);
-    const imageRef = useRef<HTMLImageElement | null>(null);
     const [file, setFile] = useState<File | null>(null);
     const [UploadPreview, setUploadPreview] = useState("");
     const { isUploading, uploadTalkingPhoto } = useHeyGen();
@@ -148,19 +139,21 @@ export default function CreateAvatarCard({ handleClose, create = true }: CreateA
             return;
         }
 
-        const response = await uploadTalkingPhoto(UploadPreview);
-        console.log(response);
-        
+        const response = await uploadTalkingPhoto(UploadPreview, file.name);
+        if(response.status){
+            handleClose();
+        }
+
 
     }, [file, UploadPreview])
 
     const handleCloseModal = useCallback(() => {
-        if(isUploading) return;
+        if (isUploading) return;
 
         setFile(null);
         setUploadPreview("");
         handleClose();
-    }, [isUploading])
+    }, [isUploading, handleClose])
 
     return (
         <Modal isOpen={create} size="sm" scrollBehavior="inside" onClose={() => handleCloseModal()}>
@@ -194,14 +187,14 @@ export default function CreateAvatarCard({ handleClose, create = true }: CreateA
                                 className={`font-medium py-2 px-7 disabled:cursor-not-allowed rounded-xl bg-gray-300 hover:bg-gray-400 transition`}
                                 onClick={() => setFile(null)}
                             >
-                               Change
+                                Change
                             </button>
                             <button
                                 disabled={isUploading}
-                                onClick={() => {handleUploadImage()}}
+                                onClick={() => { handleUploadImage() }}
                                 className={`font-medium py-2 px-7 rounded-xl disabled:cursor-not-allowed bg-orange-700 hover:bg-orange-600 text-white transition`}
                             >
-                                Upload
+                                {isUploading ? "Uploading..." : "Upload"}
                             </button>
                         </>
                     )}
