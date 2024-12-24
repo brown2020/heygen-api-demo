@@ -18,7 +18,7 @@ export async function generateVideo(
   voiceId?: string,
   audioUrl?: string,
   elevenlabsApiKey?: string,
-  emotion: Emotion = "neutral",
+  emotion: Emotion = "Excited",
   movement: Movement = "neutral"
 ) {
   await auth.protect();

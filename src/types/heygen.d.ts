@@ -42,7 +42,7 @@ export interface AvatarLook {
   name: string;
 }
 
-export type Emotion = 'neutral' | 'happy' | 'surprise' | 'serious';
+export type Emotion = 'Excited'|'Friendly'|'Serious'|'Soothing'|'Broadcaster';
 export type Movement = 'neutral' | 'lively';
 export type Frame = 'landscape' | 'square' | 'portrait' | 'fit';
 

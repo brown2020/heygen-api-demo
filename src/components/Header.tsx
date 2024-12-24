@@ -148,7 +148,7 @@ export default function Header() {
           Heygen API Demo
         </Link>
         <div className="max-xs:hidden flex items-center">
-          <Popover placement="bottom-end" showArrow={true}>
+          {/* <Popover placement="bottom-end" showArrow={true}>
             <PopoverTrigger>
               <button className="px-2 py-1 bg-white relative">
                 <Bell />
@@ -168,7 +168,7 @@ export default function Header() {
                 }
               </div>
             </PopoverContent>
-          </Popover>
+          </Popover> */}
           <div className="group">
             <button className="hover:text-blue-500 px-4 py-2 rounded-lg transition duration-300 ease-in-out transform ">Create</button>
             <div
@@ -176,7 +176,7 @@ export default function Header() {
               <Link href="/videos/create" className="px-4 py-2">Create Videos</Link>
             </div>
           </div>
-          <Link href="/videos" className="hover:text-blue-500 px-4 py-2 rounded-lg transition">Videos</Link>
+          {/* <Link href="/videos" className="hover:text-blue-500 px-4 py-2 rounded-lg transition">Videos</Link> */}
           <Link href="/avatars" className="hover:text-blue-500 px-4 py-2 rounded-lg transition">Avatars</Link>
           <Link href="/profile" className="hover:text-blue-500 px-4 py-2 rounded-lg transition">Profile</Link>
           <UserButton />

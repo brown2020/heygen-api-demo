@@ -30,7 +30,7 @@ export default function AvatarForm({ avatarDetail, submit, avatarLooks, isFetchi
     return <ModalContent>
         <ModalHeader className="flex flex-col gap-1">
             <div>
-            <span>{avatarDetail.name}</span> <span className="float-right pr-4 font-light">{avatarDetail.id}</span>
+            <span>{avatarDetail.name}</span>&nbsp; <span className="float-right pr-4 font-light">{avatarDetail.id}</span>
             </div>
         </ModalHeader>
         <ModalBody className="">

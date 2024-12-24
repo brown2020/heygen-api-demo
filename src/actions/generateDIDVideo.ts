@@ -22,7 +22,7 @@ export async function generateDIDVideo(
   voiceId?: string,
   audioUrl?: string,
   elevenlabsApiKey?: string,
-  emotion: Emotion = "neutral",
+  emotion: Emotion = "Excited",
   movement: Movement = "neutral"
 ): Promise<GenerateVideoSuccessResponse | GenerateVideoFailResponse> {
   await auth.protect();

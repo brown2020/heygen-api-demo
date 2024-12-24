@@ -8,12 +8,12 @@ interface Props {
 }
 
 const EditVideoPage: FC<Props> = async (
-  // { params }
+  { params }
 ) => {
-  // const { id } = await params; // Await the params Promise
+  const { id } = await params; // Await the params Promise
 
   return <CreateVideo 
-  // video_id={id} 
+  video_id={id} 
   />;
 };
 
