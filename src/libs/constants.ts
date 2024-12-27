@@ -20,6 +20,7 @@ export const NOTIFICATION_STATUS = {
     READ: 'read'
 };
 
+export const PER_PAGE_LIMIT = 12;
 
 export const AUDIO_LIST = AudioList;
 export const DEFAULT_AUDIO = AudioList[0].voice_id;

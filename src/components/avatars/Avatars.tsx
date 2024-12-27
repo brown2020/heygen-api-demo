@@ -5,7 +5,7 @@ import AvatarCard from "./AvatarCard";
 import { AvatarGroup } from "@/types/heygen";
 // import { ClipLoader } from "react-spinners";
 // import { collection, onSnapshot, setDoc, doc, query, where } from "firebase/firestore";
-import { Plus } from "lucide-react";
+import { MoveLeft, MoveRight, Plus } from "lucide-react";
 import toast from "react-hot-toast";
 import AvatarForm from "./AvatarForm";
 import { useAvatars } from "@/hooks/useAvatars";
@@ -14,7 +14,7 @@ import CreateAvatarCard from "./CreateAvatarCard";
 
 export default function Avatars() {
   const [showAvatarCardModel, setShowAvatarCardModel] = useState(false);
-  const { publicAvatarGroups, personalAvatarGroups, isFetchingAvatarGroups, changeSelectedGroup, selectedAvatarGroup, selectedAvatarLooks, isFetchingAvatarLooks, fetchAvatarGroupsFromHeygen } = useAvatars();
+  const { publicAvatarGroups, personalAvatarGroups, isFetchingAvatarGroups, changeSelectedGroup, selectedAvatarGroup, selectedAvatarLooks, isFetchingAvatarLooks, fetchAvatarGroupsFromHeygen, fetchNextPage, currentPageNumber, fetchPreviousPage, totalPages } = useAvatars();
   const [showCreateAvatarModal, setShowCreateAvatarModal] = useState(false);
 
   const showNotification = (message: string) => {
@@ -111,6 +111,22 @@ export default function Avatars() {
         <Modal isOpen={showAvatarCardModel} size="5xl" onClose={() => { handleClose({ status: false }) }} scrollBehavior="inside">
           {selectedAvatarGroup !== null ? <AvatarForm submit={handleClose} avatarDetail={selectedAvatarGroup} isFetchingAvatarLooks={isFetchingAvatarLooks} avatarLooks={selectedAvatarLooks} /> : <Fragment />}
         </Modal>
+        {
+          publicAvatarGroups.length > 0 &&
+          <div className="flex items-center gap-8 justify-center mt-5">
+            <button onClick={fetchPreviousPage} disabled={currentPageNumber === 1} className="rounded-md border border-slate-300 p-2.5 text-center text-sm transition-all shadow-sm hover:shadow-lg text-slate-600 hover:text-white hover:bg-slate-800 hover:border-slate-800 focus:text-white focus:bg-slate-800 focus:border-slate-800 active:border-slate-800 active:text-white active:bg-slate-800 disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none" type="button">
+              <MoveLeft className="w-4 h-4" />
+            </button>
+
+            <p className="text-slate-600">
+              Page <strong className="text-slate-800">{currentPageNumber}</strong> of&nbsp;<strong className="text-slate-800">{totalPages}</strong>
+            </p>
+
+            <button onClick={fetchNextPage} disabled={totalPages <= currentPageNumber} className="rounded-md border border-slate-300 p-2.5 text-center text-sm transition-all shadow-sm hover:shadow-lg text-slate-600 hover:text-white hover:bg-slate-800 hover:border-slate-800 focus:text-white focus:bg-slate-800 focus:border-slate-800 active:border-slate-800 active:text-white active:bg-slate-800 disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none" type="button">
+              <MoveRight className="w-4 h-4" />
+            </button>
+          </div>
+        }
 
         <CreateAvatarCard create={showCreateAvatarModal} handleClose={() => {
           console.log("Close ift  asd asdisUploading", showCreateAvatarModal);

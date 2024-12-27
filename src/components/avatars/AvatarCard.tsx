@@ -2,6 +2,7 @@ import { Fragment, useMemo } from "react";
 import Image from "next/image";
 import { Pencil } from "lucide-react";
 import { AvatarGroup, AvatarType } from "@/types/heygen";
+import onPic from "../../assets/images/nopic.png";
 
 interface AvatarCardProps {
   id: string;
@@ -37,15 +38,15 @@ export default function AvatarCard({ avatar, open }: AvatarCardProps) {
   // };
 
   const avatarPhoto = useMemo(() => {
-    return avatar ? (avatar.preview_image_url ?? "") : "";
+    return avatar ? (avatar.preview_image_url ?? onPic) : onPic;
   }, [avatar]);
 
   return (
     <article className="group/avatar relative border-transparent border-2 hover:border-gray-300 hover:drop-shadow-2xl transition-all hover:-translate-y-2 ease-in-out duration-300 isolate flex flex-col justify-end overflow-hidden rounded-2xl px-8 pb-8 pt-40 lg:pt-40 xl:pt-44 2xl:pt-52 mx-auto w-full">
       {avatar?.preview_image_url ? (
         <Image
-          src={avatarPhoto}
-          alt="test"
+          src={avatarPhoto ? avatarPhoto : onPic}
+          alt="avatar"
           width={512}
           height={512}
           className="absolute inset-0 h-full w-full object-cover"
