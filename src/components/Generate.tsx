@@ -136,14 +136,14 @@ export default function Generate() {
             placeholder="Script (optional)"
             value={script}
             onChange={(e) => setScript(e.target.value)}
-            className="border rounded p-2 resize-none"
+            className="border rounded-sm p-2 resize-none"
           />
           <input
             type="text"
             placeholder="Audio URL (optional)"
             value={audioUrl}
             onChange={(e) => setAudioUrl(e.target.value)}
-            className="border rounded p-2"
+            className="border rounded-sm p-2"
           />
           <button
             onClick={handleGenerate}
@@ -163,7 +163,7 @@ export default function Generate() {
       {videoUrl && (
         <div className="mt-8">
           <h3 className="text-lg font-bold mb-4">Generated Video</h3>
-          <video controls src={videoUrl} className="w-full rounded"></video>
+          <video controls src={videoUrl} className="w-full rounded-sm"></video>
         </div>
       )}
 

@@ -107,10 +107,10 @@ export default function AvatarCard({ id }: AvatarCardProps) {
             alt={talkingPhotoName}
             width={512}
             height={512}
-            className="w-48 h-auto rounded transition-transform transform hover:scale-105"
+            className="w-48 h-auto rounded-sm transition-transform transform hover:scale-105"
           />
         ) : (
-          <div className="w-48 h-48 bg-gray-200 flex items-center justify-center rounded">
+          <div className="w-48 h-48 bg-gray-200 flex items-center justify-center rounded-sm">
             <span>No Image</span>
           </div>
         )}
@@ -128,7 +128,7 @@ export default function AvatarCard({ id }: AvatarCardProps) {
           value={talkingPhotoName}
           onChange={handleInputChange(setTalkingPhotoName)}
           placeholder="Talking Photo Name"
-          className="border rounded p-1 w-full"
+          className="border rounded-sm p-1 w-full"
         />
         <label
           className="text-xs px-1 text-gray-600 mt-2 block"
@@ -142,7 +142,7 @@ export default function AvatarCard({ id }: AvatarCardProps) {
           value={project}
           onChange={handleInputChange(setProject)}
           placeholder="Project"
-          className="border rounded p-1 w-full"
+          className="border rounded-sm p-1 w-full"
         />
         <label
           className="text-xs px-1 text-gray-600 mt-2 block"
@@ -156,7 +156,7 @@ export default function AvatarCard({ id }: AvatarCardProps) {
           value={voiceId}
           onChange={handleInputChange(setVoiceId)}
           placeholder="Voice ID"
-          className="border rounded p-1 w-full"
+          className="border rounded-sm p-1 w-full"
         />
         <div className="flex justify-between items-center mt-2">
           <div className="flex space-x-2">
