@@ -1,6 +1,6 @@
 # Heygen API Demo
 
-This is a demo application built with [Next.js 14](https://nextjs.org/), [Firebase](https://firebase.google.com/), [Tailwind CSS](https://tailwindcss.com/), and [TypeScript](https://www.typescriptlang.org/). The app demonstrates the use of the [Heygen API](https://heygen.com/) to generate videos using avatars and talking photos, allowing users to interact with AI-driven content creation.
+This is a demo application built with [Next.js 16](https://nextjs.org/), [Firebase](https://firebase.google.com/), [Tailwind CSS](https://tailwindcss.com/), and [TypeScript](https://www.typescriptlang.org/). The app demonstrates the use of the [Heygen API](https://heygen.com/) to generate videos using avatars and talking photos, allowing users to interact with AI-driven content creation.
 
 ## Features
 
@@ -19,7 +19,7 @@ This is a demo application built with [Next.js 14](https://nextjs.org/), [Fireba
 
 Make sure you have the following tools installed on your machine:
 
-- [Node.js](https://nodejs.org/) (version 18 or later)
+- [Node.js](https://nodejs.org/) (version 20 or later recommended)
 - [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
 
 ### Installation
@@ -134,9 +134,9 @@ yarn lint
 
 ## Application Structure
 
-### Middleware
+### Middleware / Proxy
 
-The middleware uses [Clerk's middleware](https://clerk.dev/docs/nextjs) to protect specific routes. It checks if a route requires authentication and, if so, enforces the necessary protection.
+The application uses a `proxy.ts` file (formerly middleware) to integrate with [Clerk](https://clerk.dev/docs/nextjs) for protecting specific routes. It ensures that users are authenticated before accessing protected resources.
 
 ### State Management
 
@@ -161,13 +161,11 @@ The application currently uses a polling mechanism to check the status of video 
 ### Pages
 
 - **Avatars Page**:
-
   - Allows users to browse, edit, and fetch avatars from the Heygen API.
   - Displays a list of avatars stored in Firebase and provides options to filter by favorites or fetch new avatars.
   - Users can mark avatars as favorites, view details, and fetch the latest avatars directly from the API.
 
 - **Generate Page**:
-
   - The primary interface for generating videos using selected avatars.
   - Allows users to input a script and choose from different voice settings (pre-recorded audio, text-to-speech, or silence).
   - Displays status and error messages during the video generation process, and shows the generated video upon completion.
