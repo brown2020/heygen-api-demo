@@ -19,7 +19,10 @@ export async function retrieveVideo(
 ): Promise<RetrieveVideoResponse | null> {
   auth.protect();
   try {
-    while (true) {
+    let attempts = 0;
+    while (attempts < 600) {
+      attempts++;
+      console.log(`Checking video status... Attempt: ${attempts}`);
       const response = await axios.get(
         `https://api.heygen.com/v1/video_status.get`,
         {
@@ -35,6 +38,7 @@ export async function retrieveVideo(
       if (response.status === 200 && response.data.code === 100) {
         const data = response.data.data;
         const status = data.status;
+        console.log(`Current video status: ${status}`);
 
         if (status === "completed") {
           console.log("Video completed, downloading from URL:", data.video_url);

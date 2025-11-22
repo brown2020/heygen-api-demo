@@ -16,6 +16,7 @@ export interface TalkingPhoto {
   favorite?: boolean;
   name?: string;
   project?: string;
+  voiceId?: string;
 }
 
 export interface HeygenAvatarResponse {

@@ -5,17 +5,23 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/firebase/firebaseClient";
 import { HeartIcon } from "lucide-react";
 import useProfileStore from "@/zustand/useProfileStore";
+import { TalkingPhoto } from "@/types/heygen";
 
 interface AvatarCardProps {
   id: string;
+  talkingPhoto?: TalkingPhoto;
 }
 
-export default function AvatarCard({ id }: AvatarCardProps) {
-  const [favorite, setFavorite] = useState(false);
-  const [talkingPhotoName, setTalkingPhotoName] = useState("");
-  const [project, setProject] = useState("");
-  const [voiceId, setVoiceId] = useState("");
-  const [previewImageUrl, setPreviewImageUrl] = useState("");
+export default function AvatarCard({ id, talkingPhoto }: AvatarCardProps) {
+  const [favorite, setFavorite] = useState(talkingPhoto?.favorite || false);
+  const [talkingPhotoName, setTalkingPhotoName] = useState(
+    talkingPhoto?.talking_photo_name || ""
+  );
+  const [project, setProject] = useState(talkingPhoto?.project || "");
+  const [voiceId, setVoiceId] = useState(talkingPhoto?.voiceId || "");
+  const [previewImageUrl, setPreviewImageUrl] = useState(
+    talkingPhoto?.preview_image_url || ""
+  );
   const [isDirty, setIsDirty] = useState(false);
 
   const { selectedTalkingPhoto } = useProfileStore((state) => state.profile);
@@ -27,6 +33,15 @@ export default function AvatarCard({ id }: AvatarCardProps) {
   const isOnGeneratePage = pathname === "/generate";
 
   useEffect(() => {
+    if (talkingPhoto) {
+      setFavorite(talkingPhoto.favorite || false);
+      setTalkingPhotoName(talkingPhoto.talking_photo_name || "");
+      setProject(talkingPhoto.project || "");
+      setVoiceId(talkingPhoto.voiceId || "");
+      setPreviewImageUrl(talkingPhoto.preview_image_url || "");
+      return;
+    }
+
     const fetchData = async () => {
       const docRef = doc(db, "talkingPhotos", id);
       const docSnap = await getDoc(docRef);
@@ -42,7 +57,7 @@ export default function AvatarCard({ id }: AvatarCardProps) {
     };
 
     fetchData();
-  }, [id]);
+  }, [id, talkingPhoto]);
 
   const toggleFavorite = async () => {
     const newFavoriteStatus = !favorite;

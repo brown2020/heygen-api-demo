@@ -12,15 +12,12 @@ import { PulseLoader } from "react-spinners";
 import PreviousVideos from "@/components/PreviousVideos";
 import TextareaAutosize from "react-textarea-autosize";
 
-interface ItemDetails {
-  voiceId?: string;
-  // Add other properties if there are more fields in the document
-}
+import { TalkingPhoto } from "@/types/heygen";
 
 export default function Generate() {
   const router = useRouter();
   const profile = useProfileStore((state) => state.profile);
-  const [itemDetails, setItemDetails] = useState<ItemDetails | null>(null);
+  const [itemDetails, setItemDetails] = useState<TalkingPhoto | null>(null);
   const [loading, setLoading] = useState(true);
   const [script, setScript] = useState<string>("");
   const [audioUrl, setAudioUrl] = useState<string>("");
@@ -43,7 +40,7 @@ export default function Generate() {
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
-          const data = docSnap.data() as ItemDetails; // Cast data to the correct type
+          const data = docSnap.data() as TalkingPhoto; // Cast data to the correct type
           console.log("Document found:", data);
           setItemDetails(data);
         } else {
@@ -67,11 +64,9 @@ export default function Generate() {
       return;
     }
 
-    const voiceId = itemDetails?.voiceId;
-    if (!voiceId) {
-      setError("Voice ID is missing for the selected talking photo.");
-      return;
-    }
+    // Use a default voice ID if none is set.
+    // Using a common HeyGen voice ID (e.g., fluent English speaker) as fallback
+    const voiceId = itemDetails?.voiceId || "1bd001e7e50f421d891986aad5158bc8";
 
     console.log("Starting video generation...");
     setIsGenerating(true);
@@ -127,7 +122,10 @@ export default function Generate() {
 
       <div className="flex flex-col md:flex-row gap-4">
         <div className="mr-auto mb-4">
-          <AvatarCard id={profile.selectedTalkingPhoto} />
+          <AvatarCard
+            id={profile.selectedTalkingPhoto}
+            talkingPhoto={itemDetails}
+          />
         </div>
 
         <div className="flex flex-col gap-4 w-full">

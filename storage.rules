@@ -1,0 +1,24 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Videos folder
+    // Uploads are handled server-side by Admin SDK
+    // Downloads are typically handled via Signed URLs generated on the server,
+    // but we allow authenticated reads via SDK as a fallback or for direct access if needed.
+    match /videos/{allPaths=**} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+    }
+
+    // Default rule to deny access to other paths
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
+

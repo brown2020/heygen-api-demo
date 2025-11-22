@@ -90,8 +90,12 @@ export default function Avatars() {
       {error && <div className="text-red-500 mt-4">{error}</div>}
 
       <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
-        {filteredTalkingPhotos.map((photo, index) => (
-          <AvatarCard key={index} id={photo.talking_photo_id} />
+        {filteredTalkingPhotos.map((photo) => (
+          <AvatarCard
+            key={photo.talking_photo_id}
+            id={photo.talking_photo_id}
+            talkingPhoto={photo}
+          />
         ))}
       </ul>
     </div>

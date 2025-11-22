@@ -1,0 +1,45 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper function to check if user is accessing their own data
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // User profiles and user-specific data
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+
+      // User subcollections (e.g. payments)
+      match /payments/{paymentId} {
+        allow read, write: if isOwner(userId);
+      }
+      
+      // User profile data
+      match /profile/{document=**} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    // Talking Photos (Avatars)
+    // Note: The current application logic writes these to the root collection.
+    // Since the app fetches avatars using the user's API key, we allow authenticated users
+    // to sync and read these.
+    match /talkingPhotos/{photoId} {
+      allow read, write: if isAuthenticated();
+
+      // Videos subcollection
+      match /videos/{videoId} {
+        allow read: if isAuthenticated();
+        // Writes are handled by server-side admin SDK
+        allow write: if false; 
+      }
+    }
+  }
+}
+
