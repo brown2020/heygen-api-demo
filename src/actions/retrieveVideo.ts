@@ -100,6 +100,8 @@ export async function retrieveVideo(
         return null;
       }
     }
+    console.error("Video retrieval timed out after max attempts.");
+    return null;
   } catch (error) {
     console.error("Error fetching video status:", error);
     return null;
