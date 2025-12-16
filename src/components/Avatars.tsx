@@ -48,10 +48,12 @@ export default function Avatars() {
       const talkingPhotos = result.data.talking_photos;
       const talkingPhotosCollection = collection(db, "talkingPhotos");
 
-      talkingPhotos.forEach(async (photo) => {
-        const docRef = doc(talkingPhotosCollection, photo.talking_photo_id);
-        await setDoc(docRef, photo, { merge: true });
-      });
+      await Promise.all(
+        talkingPhotos.map((photo) => {
+          const docRef = doc(talkingPhotosCollection, photo.talking_photo_id);
+          return setDoc(docRef, photo, { merge: true });
+        })
+      );
     } else {
       setError("Failed to fetch talking photos");
     }

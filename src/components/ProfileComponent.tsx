@@ -2,20 +2,32 @@
 
 import Link from "next/link";
 import useProfileStore from "@/zustand/useProfileStore";
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 
 export default function ProfileComponent() {
   const profile = useProfileStore((state) => state.profile);
   const updateProfile = useProfileStore((state) => state.updateProfile);
-  const [heygenApiKey, setHeygenApiKey] = useState(profile.heygen_api_key);
-  const [elevenlabsApiKey, setElevenlabsApiKey] = useState(
-    profile.elevenlabs_api_key
+  const [draft, setDraft] = useState(() => ({
+    heygenApiKey: profile.heygen_api_key,
+    elevenlabsApiKey: profile.elevenlabs_api_key,
+  }));
+
+  const isDirty = useMemo(
+    () =>
+      draft.heygenApiKey !== profile.heygen_api_key ||
+      draft.elevenlabsApiKey !== profile.elevenlabs_api_key,
+    [
+      draft.elevenlabsApiKey,
+      draft.heygenApiKey,
+      profile.elevenlabs_api_key,
+      profile.heygen_api_key,
+    ]
   );
 
-  useEffect(() => {
-    setHeygenApiKey(profile.heygen_api_key);
-    setElevenlabsApiKey(profile.elevenlabs_api_key);
-  }, [profile.heygen_api_key, profile.elevenlabs_api_key]);
+  const heygenApiKey = isDirty ? draft.heygenApiKey : profile.heygen_api_key;
+  const elevenlabsApiKey = isDirty
+    ? draft.elevenlabsApiKey
+    : profile.elevenlabs_api_key;
 
   const handleApiKeyChange = async () => {
     if (
@@ -27,7 +39,6 @@ export default function ProfileComponent() {
           heygen_api_key: heygenApiKey,
           elevenlabs_api_key: elevenlabsApiKey,
         });
-        console.log("API keys updated successfully!");
       } catch (error) {
         console.error("Error updating API keys:", error);
       }
@@ -57,7 +68,9 @@ export default function ProfileComponent() {
           type="text"
           id="heygen-api-key"
           value={heygenApiKey}
-          onChange={(e) => setHeygenApiKey(e.target.value)}
+          onChange={(e) =>
+            setDraft((prev) => ({ ...prev, heygenApiKey: e.target.value }))
+          }
           className="border border-gray-300 rounded-md px-3 py-2 h-10"
           placeholder="Enter your HeyGen API Key"
         />
@@ -68,16 +81,15 @@ export default function ProfileComponent() {
           type="text"
           id="elevenlabs-api-key"
           value={elevenlabsApiKey}
-          onChange={(e) => setElevenlabsApiKey(e.target.value)}
+          onChange={(e) =>
+            setDraft((prev) => ({ ...prev, elevenlabsApiKey: e.target.value }))
+          }
           className="border border-gray-300 rounded-md px-3 py-2 h-10"
           placeholder="Enter your ElevenLabs API Key"
         />
         <button
           onClick={handleApiKeyChange}
-          disabled={
-            heygenApiKey === profile.heygen_api_key &&
-            elevenlabsApiKey === profile.elevenlabs_api_key
-          }
+          disabled={!isDirty}
           className="bg-blue-500 text-white px-3 py-2 rounded-md hover:opacity-50 disabled:opacity-50"
         >
           Update API Keys

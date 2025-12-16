@@ -1,68 +1,74 @@
 "use server";
 
-import { HeygenAvatarResponse } from "@/types/heygen";
+import type { HeygenAvatarResponse, TalkingPhoto } from "@/types/heygen";
 import { auth } from "@clerk/nextjs/server";
 import axios from "axios";
+
+function extractTalkingPhotos(payload: unknown): TalkingPhoto[] {
+  const data = (payload as any)?.data;
+  const inner = data?.data;
+  if (inner?.talking_photos && Array.isArray(inner.talking_photos)) {
+    return inner.talking_photos as TalkingPhoto[];
+  }
+  if (Array.isArray(inner)) return inner as TalkingPhoto[];
+  if (Array.isArray(data)) return data as TalkingPhoto[];
+  return [];
+}
+
+async function fetchTalkingPhotos(headers: Record<string, string>) {
+  // HeyGen has changed/varied these endpoints over time. We treat 404 as "not supported"
+  // and fall back without spamming errors.
+  const candidateUrls = [
+    "https://api.heygen.com/v2/talking_photos",
+    "https://api.heygen.com/v1/talking_photos",
+    "https://api.heygen.com/v1/talking_photo.list",
+  ];
+
+  for (const url of candidateUrls) {
+    const res = await axios.get(url, {
+      headers,
+      validateStatus: (status) => (status >= 200 && status < 300) || status === 404,
+    });
+    if (res.status === 404) continue;
+    return extractTalkingPhotos(res.data);
+  }
+
+  return [] as TalkingPhoto[];
+}
 
 export async function getHeygenAvatars(
   apiKey: string
 ): Promise<HeygenAvatarResponse | null> {
-  auth.protect();
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
   try {
     const headers = {
       "x-api-key": apiKey,
       "Content-Type": "application/json",
     };
 
-    // Parallel fetch for avatars and talking photos
-    // v2/avatars might only return avatars now
-    // v2/talking_photos is likely the endpoint for talking photos
-    const [avatarsRes, talkingPhotosRes] = await Promise.allSettled([
+    // Fetch avatars and talking photos. Talking photos endpoint varies; we fall back gracefully.
+    const [avatarsRes, talkingPhotos] = await Promise.all([
       axios.get("https://api.heygen.com/v2/avatars", { headers }),
-      axios.get("https://api.heygen.com/v1/talking_photos", { headers }),
+      fetchTalkingPhotos(headers),
     ]);
 
     const avatars =
-      avatarsRes.status === "fulfilled" && avatarsRes.value.data.data
-        ? avatarsRes.value.data.data.avatars || []
-        : [];
+      avatarsRes.data?.data?.avatars || [];
 
-    let talkingPhotos = [];
-
-    // Check if talking_photos came from v2/avatars (legacy behavior)
-    if (
-      avatarsRes.status === "fulfilled" &&
-      avatarsRes.value.data.data?.talking_photos
-    ) {
-      talkingPhotos = avatarsRes.value.data.data.talking_photos;
-    }
-
-    // If not, or if we want to prioritize the specific endpoint
-    if (
-      talkingPhotosRes.status === "fulfilled" &&
-      talkingPhotosRes.value.data.data
-    ) {
-        // Use the specific endpoint data if available
-        // The structure is likely data.data.talking_photos or data.data (array)
-        if (talkingPhotosRes.value.data.data.talking_photos) {
-             talkingPhotos = talkingPhotosRes.value.data.data.talking_photos;
-        } else if (Array.isArray(talkingPhotosRes.value.data.data)) {
-             talkingPhotos = talkingPhotosRes.value.data.data;
-        }
-    }
-    
-    if (avatarsRes.status === "rejected") {
-        console.error("Error fetching avatars:", avatarsRes.reason);
-    }
-    if (talkingPhotosRes.status === "rejected") {
-        console.error("Error fetching talking photos:", talkingPhotosRes.reason);
-    }
+    // Some responses may still include talking_photos under v2/avatars; merge + de-dupe.
+    const legacyTalkingPhotos = Array.isArray(avatarsRes.data?.data?.talking_photos)
+      ? (avatarsRes.data.data.talking_photos as TalkingPhoto[])
+      : [];
+    const mergedTalkingPhotos = [...talkingPhotos, ...legacyTalkingPhotos].filter(
+      (p, idx, arr) => arr.findIndex((x) => x.talking_photo_id === p.talking_photo_id) === idx
+    );
 
     return {
       error: null,
       data: {
         avatars,
-        talking_photos: talkingPhotos,
+        talking_photos: mergedTalkingPhotos,
       },
     };
   } catch (error) {

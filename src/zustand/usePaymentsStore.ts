@@ -47,12 +47,15 @@ export const usePaymentsStore = create<PaymentsStoreState>((set) => ({
       const payments = querySnapshot.docs.map((doc) => ({
         id: doc.id,
         amount: doc.data().amount,
-        createdAt: doc.data().createdAt,
+        createdAt: doc.data().createdAt ?? null,
         status: doc.data().status,
       }));
 
       // Sort payments by createdAt with newest at the top
-      payments.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+      payments.sort(
+        (a, b) =>
+          (b.createdAt?.toMillis() ?? 0) - (a.createdAt?.toMillis() ?? 0)
+      );
 
       set({ payments, paymentsLoading: false });
     } catch (error: unknown) {
@@ -73,6 +76,8 @@ export const usePaymentsStore = create<PaymentsStoreState>((set) => ({
     set({ paymentsLoading: true });
 
     try {
+      const createdAt = Timestamp.now();
+
       // Query to check if the payment with the same id already exists
       const q = query(
         collection(db, "users", uid, "payments"),
@@ -91,7 +96,7 @@ export const usePaymentsStore = create<PaymentsStoreState>((set) => ({
         {
           id: payment.id,
           amount: payment.amount,
-          createdAt: Timestamp.now(),
+          createdAt,
           status: payment.status,
         }
       );
@@ -99,7 +104,7 @@ export const usePaymentsStore = create<PaymentsStoreState>((set) => ({
       const newPayment = {
         id: newPaymentDoc.id,
         amount: payment.amount,
-        createdAt: Timestamp.now(),
+        createdAt,
         status: payment.status,
       };
 

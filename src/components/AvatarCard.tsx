@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
 import { doc, getDoc, setDoc } from "firebase/firestore";
@@ -13,15 +13,14 @@ interface AvatarCardProps {
 }
 
 export default function AvatarCard({ id, talkingPhoto }: AvatarCardProps) {
-  const [favorite, setFavorite] = useState(talkingPhoto?.favorite || false);
-  const [talkingPhotoName, setTalkingPhotoName] = useState(
-    talkingPhoto?.talking_photo_name || ""
-  );
-  const [project, setProject] = useState(talkingPhoto?.project || "");
-  const [voiceId, setVoiceId] = useState(talkingPhoto?.voiceId || "");
-  const [previewImageUrl, setPreviewImageUrl] = useState(
-    talkingPhoto?.preview_image_url || ""
-  );
+  const [favoriteOverride, setFavoriteOverride] = useState<boolean | null>(null);
+  const [draft, setDraft] = useState(() => ({
+    talkingPhotoName: talkingPhoto?.talking_photo_name || "",
+    project: talkingPhoto?.project || "",
+    voiceId: talkingPhoto?.voiceId || "",
+  }));
+  const [fetchedTalkingPhoto, setFetchedTalkingPhoto] =
+    useState<TalkingPhoto | null>(null);
   const [isDirty, setIsDirty] = useState(false);
 
   const { selectedTalkingPhoto } = useProfileStore((state) => state.profile);
@@ -33,53 +32,62 @@ export default function AvatarCard({ id, talkingPhoto }: AvatarCardProps) {
   const isOnGeneratePage = pathname === "/generate";
 
   useEffect(() => {
-    if (talkingPhoto) {
-      setFavorite(talkingPhoto.favorite || false);
-      setTalkingPhotoName(talkingPhoto.talking_photo_name || "");
-      setProject(talkingPhoto.project || "");
-      setVoiceId(talkingPhoto.voiceId || "");
-      setPreviewImageUrl(talkingPhoto.preview_image_url || "");
-      return;
-    }
-
     const fetchData = async () => {
       const docRef = doc(db, "talkingPhotos", id);
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
-        const data = docSnap.data();
-        setFavorite(data.favorite || false);
-        setTalkingPhotoName(data.talking_photo_name || "");
-        setProject(data.project || "");
-        setVoiceId(data.voiceId || "");
-        setPreviewImageUrl(data.preview_image_url || "");
+        setFetchedTalkingPhoto(docSnap.data() as TalkingPhoto);
       }
     };
 
-    fetchData();
+    if (!talkingPhoto) fetchData();
   }, [id, talkingPhoto]);
+
+  const source = talkingPhoto ?? fetchedTalkingPhoto;
+  const favorite = favoriteOverride ?? (source?.favorite ?? false);
+
+  const displayed = useMemo(() => {
+    if (isDirty) return draft;
+    return {
+      talkingPhotoName: source?.talking_photo_name || "",
+      project: source?.project || "",
+      voiceId: source?.voiceId || "",
+    };
+  }, [draft, isDirty, source?.project, source?.talking_photo_name, source?.voiceId]);
+
+  const previewImageUrl = source?.preview_image_url || "";
 
   const toggleFavorite = async () => {
     const newFavoriteStatus = !favorite;
-    setFavorite(newFavoriteStatus);
-    setIsDirty(true);
+    setFavoriteOverride(newFavoriteStatus);
 
     const docRef = doc(db, "talkingPhotos", id);
     await setDoc(docRef, { favorite: newFavoriteStatus }, { merge: true });
   };
 
-  const handleInputChange =
-    (setter: React.Dispatch<React.SetStateAction<string>>) =>
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setter(e.target.value);
+  const updateDraftField =
+    (field: keyof typeof draft) => (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (!isDirty) {
+        setDraft({
+          talkingPhotoName: source?.talking_photo_name || "",
+          project: source?.project || "",
+          voiceId: source?.voiceId || "",
+        });
+      }
       setIsDirty(true);
+      setDraft((prev) => ({ ...prev, [field]: e.target.value }));
     };
 
   const saveDetails = async () => {
     const docRef = doc(db, "talkingPhotos", id);
     await setDoc(
       docRef,
-      { talking_photo_name: talkingPhotoName, project, voiceId },
+      {
+        talking_photo_name: displayed.talkingPhotoName,
+        project: displayed.project,
+        voiceId: displayed.voiceId,
+      },
       { merge: true }
     );
     setIsDirty(false);
@@ -101,7 +109,7 @@ export default function AvatarCard({ id, talkingPhoto }: AvatarCardProps) {
     >
       <div className="flex justify-between items-center">
         <h3 className="font-bold mb-2">
-          {talkingPhotoName || "Untitled Talking Photo"}
+          {displayed.talkingPhotoName || "Untitled Talking Photo"}
         </h3>
         <HeartIcon
           className="cursor-pointer"
@@ -119,7 +127,7 @@ export default function AvatarCard({ id, talkingPhoto }: AvatarCardProps) {
         {previewImageUrl ? (
           <Image
             src={previewImageUrl}
-            alt={talkingPhotoName}
+            alt={displayed.talkingPhotoName}
             width={512}
             height={512}
             className="w-48 h-auto rounded-sm transition-transform transform hover:scale-105"
@@ -140,8 +148,8 @@ export default function AvatarCard({ id, talkingPhoto }: AvatarCardProps) {
         <input
           id="talkingPhotoName"
           type="text"
-          value={talkingPhotoName}
-          onChange={handleInputChange(setTalkingPhotoName)}
+          value={displayed.talkingPhotoName}
+          onChange={updateDraftField("talkingPhotoName")}
           placeholder="Talking Photo Name"
           className="border rounded-sm p-1 w-full"
         />
@@ -154,8 +162,8 @@ export default function AvatarCard({ id, talkingPhoto }: AvatarCardProps) {
         <input
           id="project"
           type="text"
-          value={project}
-          onChange={handleInputChange(setProject)}
+          value={displayed.project}
+          onChange={updateDraftField("project")}
           placeholder="Project"
           className="border rounded-sm p-1 w-full"
         />
@@ -168,8 +176,8 @@ export default function AvatarCard({ id, talkingPhoto }: AvatarCardProps) {
         <input
           id="voiceId"
           type="text"
-          value={voiceId}
-          onChange={handleInputChange(setVoiceId)}
+          value={displayed.voiceId}
+          onChange={updateDraftField("voiceId")}
           placeholder="Voice ID"
           className="border rounded-sm p-1 w-full"
         />

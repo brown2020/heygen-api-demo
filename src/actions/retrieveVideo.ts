@@ -17,11 +17,13 @@ export async function retrieveVideo(
   talkingPhotoId: string,
   pollInterval: number = 1000
 ): Promise<RetrieveVideoResponse | null> {
-  auth.protect();
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+  const isDebug = process.env.NODE_ENV !== "production";
   let attempts = 0;
   while (attempts < 600) {
     attempts++;
-    console.log(`Checking video status... Attempt: ${attempts}`);
+    if (isDebug) console.log(`Checking video status... Attempt: ${attempts}`);
 
     try {
       const response = await axios.get(
@@ -39,10 +41,11 @@ export async function retrieveVideo(
       if (response.status === 200 && response.data.code === 100) {
         const data = response.data.data;
         const status = data.status;
-        console.log(`Current video status: ${status}`);
+        if (isDebug) console.log(`Current video status: ${status}`);
 
         if (status === "completed") {
-          console.log("Video completed, downloading from URL:", data.video_url);
+          if (isDebug)
+            console.log("Video completed, downloading from URL:", data.video_url);
 
           // Download the video from the provided video URL
           const videoResponse = await axios.get(data.video_url, {
@@ -58,14 +61,15 @@ export async function retrieveVideo(
               contentType: "video/mp4",
             },
           });
-          console.log("Video uploaded to Firebase Storage.");
+          if (isDebug) console.log("Video uploaded to Firebase Storage.");
 
           // Generate a signed URL with a very long expiration (100 years)
           const [videoUrl] = await file.getSignedUrl({
             action: "read",
             expires: "01-01-2124", // Set the expiration date 100 years in the future
           });
-          console.log("Generated signed URL with long expiration:", videoUrl);
+          if (isDebug)
+            console.log("Generated signed URL with long expiration:", videoUrl);
 
           // Save the signed URL to Firestore
           const docRef = adminDb
@@ -79,7 +83,7 @@ export async function retrieveVideo(
             thumbnail_url: data.thumbnail_url || null,
             created_at: new Date(),
           });
-          console.log("Video URL saved to Firestore.");
+          if (isDebug) console.log("Video URL saved to Firestore.");
 
           return {
             status: status,

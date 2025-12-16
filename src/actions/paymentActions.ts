@@ -4,16 +4,25 @@
 import { auth } from "@clerk/nextjs/server";
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
+let stripe: Stripe | null = null;
+
+function getStripe() {
+  if (stripe) return stripe;
+  const secretKey = process.env.STRIPE_SECRET_KEY;
+  if (!secretKey) throw new Error("STRIPE_SECRET_KEY is not defined");
+  stripe = new Stripe(secretKey);
+  return stripe;
+}
 
 export async function createPaymentIntent(amount: number) {
-  auth.protect();
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
   const product = process.env.NEXT_PUBLIC_STRIPE_PRODUCT_NAME;
 
   try {
     if (!product) throw new Error("Stripe product name is not defined");
 
-    const paymentIntent = await stripe.paymentIntents.create({
+    const paymentIntent = await getStripe().paymentIntents.create({
       amount,
       currency: "usd",
       metadata: { product },
@@ -28,9 +37,11 @@ export async function createPaymentIntent(amount: number) {
 }
 
 export async function validatePaymentIntent(paymentIntentId: string) {
-  auth.protect();
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
   try {
-    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    const paymentIntent =
+      await getStripe().paymentIntents.retrieve(paymentIntentId);
 
     if (paymentIntent.status === "succeeded") {
       // Convert the Stripe object to a plain object

@@ -20,7 +20,7 @@ interface AuthState {
 }
 
 interface AuthActions {
-  setAuthDetails: (details: Partial<AuthState>) => void;
+  setAuthDetails: (details: Partial<AuthState>) => Promise<void>;
   clearAuthDetails: () => void;
 }
 
@@ -50,16 +50,14 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     set((state) => ({ ...state, ...details }));
 
     const storeState = get();
-    // Use a flexible type for the accumulator to avoid strict type conflicts
-    const filteredState = Object.keys(defaultAuthState).reduce((obj, key) => {
-      const typedKey = key as keyof AuthState;
-      const value = storeState[typedKey];
-      if (value !== undefined && value !== null) {
-        // Exclude undefined and null values
-        obj[typedKey] = value;
-      }
-      return obj;
-    }, {} as Record<string, unknown>); // Use Record<string, unknown> to allow any key-value pair
+    const filteredState: Partial<AuthState> = {};
+    const setIfPresent = <K extends keyof AuthState>(key: K) => {
+      const value = storeState[key];
+      if (value !== undefined && value !== null) filteredState[key] = value;
+    };
+    for (const key of Object.keys(defaultAuthState) as (keyof AuthState)[]) {
+      setIfPresent(key);
+    }
 
     await updateUserDetailsInFirestore(filteredState, storeState.uid);
   },
@@ -73,14 +71,12 @@ async function updateUserDetailsInFirestore(
 ) {
   if (uid) {
     const userRef = doc(db, `users/${uid}`);
-    console.log("Updating auth details in Firestore:", details);
     try {
       await setDoc(
         userRef,
         { ...details, lastSignIn: serverTimestamp() },
         { merge: true }
       );
-      console.log("Auth details updated successfully in Firestore.");
     } catch (error) {
       console.error("Error updating auth details in Firestore:", error);
     }

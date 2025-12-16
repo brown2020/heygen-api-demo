@@ -29,19 +29,16 @@ export default function Generate() {
     const fetchDetails = async () => {
       const selectedId = profile.selectedTalkingPhoto;
       if (!selectedId) {
-        console.log("No selectedTalkingPhoto found. Redirecting to /avatars.");
         router.push("/avatars");
         return;
       }
 
       try {
-        console.log("Fetching details for selectedTalkingPhoto:", selectedId);
         const docRef = doc(db, "talkingPhotos", selectedId);
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
           const data = docSnap.data() as TalkingPhoto; // Cast data to the correct type
-          console.log("Document found:", data);
           setItemDetails(data);
         } else {
           console.error("No such document found in Firestore!");
@@ -56,7 +53,7 @@ export default function Generate() {
     };
 
     fetchDetails();
-  }, [profile, router]);
+  }, [profile.selectedTalkingPhoto, router]);
 
   const handleGenerate = async () => {
     if (!profile.selectedTalkingPhoto) {
@@ -72,7 +69,6 @@ export default function Generate() {
       voiceId = "1bd001e7e50f421d891986aad5158bc8";
     }
 
-    console.log("Starting video generation...");
     setIsGenerating(true);
     setError(null);
 
@@ -86,7 +82,6 @@ export default function Generate() {
       );
 
       if (result && result.video_id) {
-        console.log("Video generation initiated. Video ID:", result.video_id);
         const statusResponse = await retrieveVideo(
           profile.heygen_api_key || "",
           result.video_id,
@@ -94,10 +89,6 @@ export default function Generate() {
         );
 
         if (statusResponse && statusResponse.status === "completed") {
-          console.log(
-            "Video generation completed. Video URL:",
-            statusResponse.video_url
-          );
           setVideoUrl(statusResponse.video_url!);
         } else if (statusResponse && statusResponse.status === "failed") {
           console.error("Video generation failed:", statusResponse.error);
@@ -112,7 +103,6 @@ export default function Generate() {
       setError("An error occurred while generating the video.");
     } finally {
       setIsGenerating(false);
-      console.log("Video generation process completed.");
     }
   };
 
