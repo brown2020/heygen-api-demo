@@ -66,7 +66,11 @@ export default function Generate() {
 
     // Use a default voice ID if none is set.
     // Using a common HeyGen voice ID (e.g., fluent English speaker) as fallback
-    const voiceId = itemDetails?.voiceId || "1bd001e7e50f421d891986aad5158bc8";
+    // Also handling case where voice ID matches known invalid one "8awO799gQXhcAUkg9d9l"
+    let voiceId = itemDetails?.voiceId;
+    if (!voiceId || voiceId === "8awO799gQXhcAUkg9d9l") {
+      voiceId = "1bd001e7e50f421d891986aad5158bc8";
+    }
 
     console.log("Starting video generation...");
     setIsGenerating(true);

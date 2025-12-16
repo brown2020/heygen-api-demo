@@ -131,6 +131,12 @@ export async function generateTalkingPhotoVideo(
         "Headers:",
         JSON.stringify(error.response?.headers, null, 2)
       );
+      
+      const apiErrorMessage = error.response?.data?.error?.message || error.message;
+      return {
+        video_id: "",
+        error: `API Error: ${apiErrorMessage}`,
+      };
     } else if (error instanceof Error) {
       // Handle generic errors
       console.error("Unexpected error occurred:", error.message);

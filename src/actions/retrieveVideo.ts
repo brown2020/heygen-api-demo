@@ -18,11 +18,12 @@ export async function retrieveVideo(
   pollInterval: number = 1000
 ): Promise<RetrieveVideoResponse | null> {
   auth.protect();
-  try {
-    let attempts = 0;
-    while (attempts < 600) {
-      attempts++;
-      console.log(`Checking video status... Attempt: ${attempts}`);
+  let attempts = 0;
+  while (attempts < 600) {
+    attempts++;
+    console.log(`Checking video status... Attempt: ${attempts}`);
+
+    try {
       const response = await axios.get(
         `https://api.heygen.com/v1/video_status.get`,
         {
@@ -92,18 +93,20 @@ export async function retrieveVideo(
             error: data.error || "An error occurred during video rendering.",
           };
         }
-
-        // Wait for the poll interval before the next check
-        await new Promise((resolve) => setTimeout(resolve, pollInterval));
       } else {
         console.error("Error fetching video status:", response.data.message);
-        return null;
+        // Do not return null here, allow retry
       }
+    } catch (error) {
+      console.error("Error fetching video status (will retry):", error);
+      // Do not return null here, allow retry
     }
-    console.error("Video retrieval timed out after max attempts.");
-    return null;
-  } catch (error) {
-    console.error("Error fetching video status:", error);
-    return null;
+
+    // Wait for the poll interval before the next check
+    await new Promise((resolve) => setTimeout(resolve, pollInterval));
   }
+
+  console.error("Video retrieval timed out after max attempts.");
+  return null;
 }
+
