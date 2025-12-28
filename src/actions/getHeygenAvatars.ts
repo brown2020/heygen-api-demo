@@ -4,13 +4,23 @@ import type { HeygenAvatarResponse, TalkingPhoto } from "@/types/heygen";
 import { auth } from "@clerk/nextjs/server";
 import axios from "axios";
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
 function extractTalkingPhotos(payload: unknown): TalkingPhoto[] {
-  const data = (payload as any)?.data;
-  const inner = data?.data;
-  if (inner?.talking_photos && Array.isArray(inner.talking_photos)) {
-    return inner.talking_photos as TalkingPhoto[];
+  if (!isRecord(payload)) return [];
+
+  const data = payload.data;
+  if (isRecord(data)) {
+    const inner = data.data;
+    if (isRecord(inner) && Array.isArray(inner.talking_photos)) {
+      return inner.talking_photos as TalkingPhoto[];
+    }
+    if (Array.isArray(inner)) return inner as TalkingPhoto[];
+    if (Array.isArray(data.talking_photos)) return data.talking_photos as TalkingPhoto[];
   }
-  if (Array.isArray(inner)) return inner as TalkingPhoto[];
+
   if (Array.isArray(data)) return data as TalkingPhoto[];
   return [];
 }

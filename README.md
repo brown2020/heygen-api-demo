@@ -19,7 +19,7 @@ This is a demo application built with [Next.js 16](https://nextjs.org/), [Fireba
 
 Make sure you have the following tools installed on your machine:
 
-- [Node.js](https://nodejs.org/) (version 20 or later recommended)
+- [Node.js](https://nodejs.org/) (**version 20.9.0 or later**)
 - [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
 
 ### Installation
@@ -34,7 +34,7 @@ Make sure you have the following tools installed on your machine:
 2. **Install dependencies**:
 
    ```bash
-   npm install
+   npm ci
    ```
 
    or
@@ -132,6 +132,8 @@ or
 yarn lint
 ```
 
+This project uses **ESLint v9** with a **flat config** (`eslint.config.mjs`), which is the supported configuration format for ESLint 9+.
+
 ## Application Structure
 
 ### Middleware / Proxy
@@ -190,7 +192,7 @@ Contributions are welcome! Please open an issue or submit a pull request for any
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **GNU Affero General Public License v3.0** - see the [LICENSE.md](LICENSE.md) file for details.
 
 ## Acknowledgments
 
