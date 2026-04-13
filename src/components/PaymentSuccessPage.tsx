@@ -30,7 +30,6 @@ export default function PaymentSuccessPage({ payment_intent }: Props) {
 
   useEffect(() => {
     if (!payment_intent) {
-      console.log("in useEffect no payment intent", payment_intent);
       setMessage("No payment intent found");
       setLoading(false);
       return;
@@ -39,7 +38,6 @@ export default function PaymentSuccessPage({ payment_intent }: Props) {
     const handlePaymentSuccess = async () => {
       try {
         const data = await validatePaymentIntent(payment_intent);
-        console.log("Payment validation result:", data);
 
         if (data.status === "succeeded") {
           // Check if payment is already processed
@@ -66,7 +64,6 @@ export default function PaymentSuccessPage({ payment_intent }: Props) {
           setId(data.id);
           setAmount(data.amount);
           setStatus(data.status);
-          console.log("Payment successful:", data.amount);
 
           // Add payment to store
           await addPayment({
@@ -78,7 +75,6 @@ export default function PaymentSuccessPage({ payment_intent }: Props) {
           // Add credits to profile
           const creditsToAdd = data.amount + 1;
           await addCredits(creditsToAdd);
-          console.log("Credits added to profile successfully");
         } else {
           console.error("Payment validation failed:", data.status);
           setMessage("Payment validation failed");
@@ -116,7 +112,7 @@ export default function PaymentSuccessPage({ payment_intent }: Props) {
 
       <Link
         href="/profile"
-        className="px-4 py-2 bg-blue-500 text-white rounded-md hover:opacity-50"
+        className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
       >
         View Account
       </Link>

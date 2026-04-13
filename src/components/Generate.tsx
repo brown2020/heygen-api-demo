@@ -89,17 +89,14 @@ export default function Generate() {
         );
 
         if (statusResponse && statusResponse.status === "completed") {
-          setVideoUrl(statusResponse.video_url!);
+          setVideoUrl(statusResponse.video_url ?? null);
         } else if (statusResponse && statusResponse.status === "failed") {
-          console.error("Video generation failed:", statusResponse.error);
           setError(statusResponse.error || "Video generation failed.");
         }
       } else {
-        console.error("Failed to generate video:", result?.error);
         setError(result?.error || "Failed to generate video.");
       }
-    } catch (error) {
-      console.error("Error during video generation:", error);
+    } catch {
       setError("An error occurred while generating the video.");
     } finally {
       setIsGenerating(false);
