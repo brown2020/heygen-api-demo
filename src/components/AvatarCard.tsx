@@ -189,7 +189,7 @@ export default function AvatarCard({ id, talkingPhoto }: AvatarCardProps) {
                 saveDetails();
               }}
               className={`bg-blue-500 text-white px-3 py-2 rounded-md ${
-                isDirty ? "hover:opacity-50" : "opacity-50 cursor-not-allowed"
+                isDirty ? "hover:bg-blue-600" : "opacity-50 cursor-not-allowed"
               }`}
               disabled={!isDirty}
             >
@@ -201,9 +201,7 @@ export default function AvatarCard({ id, talkingPhoto }: AvatarCardProps) {
                   e.stopPropagation();
                   selectTalkingPhoto();
                 }}
-                className={`bg-green-500 text-white px-3 py-2 rounded-md ${
-                  isSelected ? "hover:opacity-50" : ""
-                }`}
+                className="bg-green-500 text-white px-3 py-2 rounded-md hover:bg-green-600"
               >
                 {isSelected ? "Go to Generate" : "Select"}
               </button>

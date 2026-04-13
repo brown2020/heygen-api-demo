@@ -38,8 +38,6 @@ export default function Header() {
             auth,
             token || ""
           );
-          console.log("User signed in to Firebase:", userCredentials.user);
-
           // Update Firebase user profile
           await updateProfile(userCredentials.user, {
             displayName: user.fullName,
@@ -59,7 +57,6 @@ export default function Header() {
           clearAuthDetails();
         }
       } else {
-        console.log("User is not signed in with Clerk");
         await firebaseSignOut(auth);
         clearAuthDetails();
       }

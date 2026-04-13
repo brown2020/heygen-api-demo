@@ -21,7 +21,10 @@ export default function PaymentsPage() {
 
       {paymentsLoading && <div>Loading payments...</div>}
       {paymentsError && <div>Error: {paymentsError}</div>}
-      {!paymentsLoading && !paymentsError && (
+      {!paymentsLoading && !paymentsError && payments.length === 0 && (
+        <p className="text-gray-500">No payments yet.</p>
+      )}
+      {!paymentsLoading && !paymentsError && payments.length > 0 && (
         <div className="flex flex-col gap-2">
           {payments.map((payment) => (
             <div

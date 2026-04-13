@@ -53,7 +53,7 @@ export default function ProfileComponent() {
             Conversation Credits: {Math.round(profile.credits)}
           </div>
           <Link
-            className="bg-blue-500 text-white px-3 py-2 rounded-md hover:opacity-50 flex-1 text-center"
+            className="bg-blue-500 text-white px-3 py-2 rounded-md hover:bg-blue-600 flex-1 text-center"
             href={"/payment-attempt"}
           >
             Buy 10,000 Credits
@@ -90,7 +90,7 @@ export default function ProfileComponent() {
         <button
           onClick={handleApiKeyChange}
           disabled={!isDirty}
-          className="bg-blue-500 text-white px-3 py-2 rounded-md hover:opacity-50 disabled:opacity-50"
+          className="bg-blue-500 text-white px-3 py-2 rounded-md hover:bg-blue-600 disabled:opacity-50"
         >
           Update API Keys
         </button>

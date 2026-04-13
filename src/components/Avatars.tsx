@@ -77,7 +77,7 @@ export default function Avatars() {
           </button>
           <button
             onClick={fetchTalkingPhotos}
-            className="bg-blue-500 text-white px-3 py-2 rounded-md hover:opacity-50 flex items-center justify-center"
+            className="bg-blue-500 text-white px-3 py-2 rounded-md hover:bg-blue-600 flex items-center justify-center"
             disabled={isLoading}
           >
             {isLoading ? (
@@ -91,15 +91,23 @@ export default function Avatars() {
 
       {error && <div className="text-red-500 mt-4">{error}</div>}
 
-      <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
-        {filteredTalkingPhotos.map((photo) => (
-          <AvatarCard
-            key={photo.talking_photo_id}
-            id={photo.talking_photo_id}
-            talkingPhoto={photo}
-          />
-        ))}
-      </ul>
+      {filteredTalkingPhotos.length === 0 ? (
+        <p className="text-gray-500 text-center py-8">
+          {showFavorites
+            ? "No favorite talking photos yet."
+            : "No talking photos available. Click \"Fetch Talking Photos\" to load them."}
+        </p>
+      ) : (
+        <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+          {filteredTalkingPhotos.map((photo) => (
+            <AvatarCard
+              key={photo.talking_photo_id}
+              id={photo.talking_photo_id}
+              talkingPhoto={photo}
+            />
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

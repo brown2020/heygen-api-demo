@@ -40,17 +40,21 @@ export default function PreviousVideos({
   return (
     <div className="mt-8">
       <h3 className="text-lg font-bold mb-4">Previous Videos</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {videos.map((video) => (
-          <div key={video.video_url} className="border p-4 rounded-md shadow-sm">
-            <video
-              controls
-              src={video.video_url}
-              className="w-full rounded-sm"
-            ></video>
-          </div>
-        ))}
-      </div>
+      {videos.length === 0 ? (
+        <p className="text-gray-500">No previous videos yet.</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {videos.map((video) => (
+            <div key={video.video_url} className="border p-4 rounded-md shadow-sm">
+              <video
+                controls
+                src={video.video_url}
+                className="w-full rounded-sm"
+              ></video>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

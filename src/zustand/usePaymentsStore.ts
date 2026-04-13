@@ -34,10 +34,7 @@ export const usePaymentsStore = create<PaymentsStoreState>((set) => ({
 
   fetchPayments: async () => {
     const uid = useAuthStore.getState().uid;
-    if (!uid) {
-      console.error("Invalid UID for fetchPayments");
-      return;
-    }
+    if (!uid) return;
 
     set({ paymentsLoading: true });
 
@@ -61,17 +58,13 @@ export const usePaymentsStore = create<PaymentsStoreState>((set) => ({
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : "An unknown error occurred";
-      console.error("Error fetching payments:", errorMessage);
       set({ paymentsError: errorMessage, paymentsLoading: false });
     }
   },
 
   addPayment: async (payment) => {
     const uid = useAuthStore.getState().uid;
-    if (!uid) {
-      console.error("Invalid UID for addPayment");
-      return;
-    }
+    if (!uid) return;
 
     set({ paymentsLoading: true });
 
@@ -113,7 +106,8 @@ export const usePaymentsStore = create<PaymentsStoreState>((set) => ({
 
         // Sort payments by createdAt with newest at the top
         updatedPayments.sort(
-          (a, b) => b.createdAt!.toMillis() - a.createdAt!.toMillis()
+          (a, b) =>
+            (b.createdAt?.toMillis() ?? 0) - (a.createdAt?.toMillis() ?? 0)
         );
 
         return { payments: updatedPayments, paymentsLoading: false };
@@ -123,7 +117,6 @@ export const usePaymentsStore = create<PaymentsStoreState>((set) => ({
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : "An unknown error occurred";
-      console.error("Error adding payment:", errorMessage);
       set({ paymentsError: errorMessage, paymentsLoading: false });
     }
   },
