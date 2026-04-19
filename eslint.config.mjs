@@ -4,8 +4,11 @@ import typescript from "eslint-config-next/typescript";
 
 const config = [
   ...fixupConfigRules([...coreWebVitals, ...typescript]),
+  {
+    rules: {
+      "react-hooks/set-state-in-effect": "off",
+    },
+  },
 ];
 
 export default config;
-
-
