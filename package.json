@@ -9,11 +9,11 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@clerk/nextjs": "^6",
+    "@clerk/nextjs": "6.39.3",
     "@stripe/react-stripe-js": "^6.2.0",
-    "@stripe/stripe-js": "^9.2.0",
-    "axios": "^1.15.0",
-    "firebase": "^12.12.0",
+    "@stripe/stripe-js": "^9.3.0",
+    "axios": "^1.15.2",
+    "firebase": "^12.12.1",
     "firebase-admin": "^13.8.0",
     "lucide-react": "0.468.0",
     "next": "^16.2.4",
@@ -27,14 +27,14 @@
   },
   "devDependencies": {
     "@eslint/compat": "^2.0.5",
-    "@tailwindcss/postcss": "^4.2.2",
+    "@tailwindcss/postcss": "^4.2.4",
     "@types/node": "^25.6.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "eslint": "^9.30.1",
+    "eslint": "^9.39.4",
     "eslint-config-next": "^16.2.4",
     "postcss": "^8.5.10",
-    "tailwindcss": "^4.2.2",
+    "tailwindcss": "^4.2.4",
     "typescript": "^6.0.3"
   }
 }
