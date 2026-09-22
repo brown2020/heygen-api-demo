@@ -9,7 +9,7 @@ import {
 } from "firebase/firestore";
 import { useAuthStore } from "./useAuthStore";
 import toast from "react-hot-toast";
-import { db } from "@/firebase/firebaseClient";
+import { db, isFirebaseConfigured } from "@/firebase/firebaseClient";
 
 export type PaymentType = {
   id: string;
@@ -35,6 +35,7 @@ export const usePaymentsStore = create<PaymentsStoreState>((set) => ({
   fetchPayments: async () => {
     const uid = useAuthStore.getState().uid;
     if (!uid) return;
+    if (!isFirebaseConfigured) return;
 
     set({ paymentsLoading: true });
 
@@ -65,6 +66,7 @@ export const usePaymentsStore = create<PaymentsStoreState>((set) => ({
   addPayment: async (payment) => {
     const uid = useAuthStore.getState().uid;
     if (!uid) return;
+    if (!isFirebaseConfigured) return;
 
     set({ paymentsLoading: true });
 
@@ -124,6 +126,7 @@ export const usePaymentsStore = create<PaymentsStoreState>((set) => ({
   checkIfPaymentProcessed: async (paymentId) => {
     const uid = useAuthStore.getState().uid;
     if (!uid) return null;
+    if (!isFirebaseConfigured) return null;
 
     const paymentsRef = collection(db, "users", uid, "payments");
     const q = query(

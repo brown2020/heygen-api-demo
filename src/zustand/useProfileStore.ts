@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { useAuthStore } from "./useAuthStore";
-import { db } from "@/firebase/firebaseClient";
+import { db, isFirebaseConfigured } from "@/firebase/firebaseClient";
 
 export interface ProfileType {
   email: string;
@@ -64,6 +64,7 @@ const useProfileStore = create<ProfileState>((set, get) => ({
     const { uid, authEmail, authDisplayName, authPhotoUrl, authEmailVerified } =
       useAuthStore.getState();
     if (!uid) return;
+    if (!isFirebaseConfigured) return;
 
     try {
       const userRef = doc(db, `users/${uid}/profile/userData`);
@@ -103,6 +104,7 @@ const useProfileStore = create<ProfileState>((set, get) => ({
   updateProfile: async (newProfile: Partial<ProfileType>) => {
     const uid = useAuthStore.getState().uid;
     if (!uid) return;
+    if (!isFirebaseConfigured) return;
 
     try {
       const userRef = doc(db, `users/${uid}/profile/userData`);
@@ -118,6 +120,7 @@ const useProfileStore = create<ProfileState>((set, get) => ({
   useCredits: async (amount: number) => {
     const uid = useAuthStore.getState().uid;
     if (!uid) return false;
+    if (!isFirebaseConfigured) return false;
 
     const profile = get().profile;
     if (profile.credits < amount) {
@@ -141,6 +144,7 @@ const useProfileStore = create<ProfileState>((set, get) => ({
   addCredits: async (amount: number) => {
     const uid = useAuthStore.getState().uid;
     if (!uid) return;
+    if (!isFirebaseConfigured) return;
 
     const profile = get().profile;
     const newCredits = profile.credits + amount;

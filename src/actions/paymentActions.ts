@@ -1,18 +1,10 @@
-// paymentActions.ts
 "use server";
 
 import { auth } from "@clerk/nextjs/server";
 import Stripe from "stripe";
 
-let stripe: Stripe | null = null;
-
-function getStripe() {
-  if (stripe) return stripe;
-  const secretKey = process.env.STRIPE_SECRET_KEY;
-  if (!secretKey) throw new Error("STRIPE_SECRET_KEY is not defined");
-  stripe = new Stripe(secretKey);
-  return stripe;
-}
+// Construct once; empty string when unset so CI/build without Stripe secrets still loads.
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
 
 export async function createPaymentIntent(amount: number) {
   const { userId } = await auth();
@@ -20,9 +12,12 @@ export async function createPaymentIntent(amount: number) {
   const product = process.env.NEXT_PUBLIC_STRIPE_PRODUCT_NAME;
 
   try {
+    if (!process.env.STRIPE_SECRET_KEY) {
+      throw new Error("STRIPE_SECRET_KEY is not defined");
+    }
     if (!product) throw new Error("Stripe product name is not defined");
 
-    const paymentIntent = await getStripe().paymentIntents.create({
+    const paymentIntent = await stripe.paymentIntents.create({
       amount,
       currency: "usd",
       metadata: { product },
@@ -40,11 +35,13 @@ export async function validatePaymentIntent(paymentIntentId: string) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
   try {
+    if (!process.env.STRIPE_SECRET_KEY) {
+      throw new Error("STRIPE_SECRET_KEY is not defined");
+    }
     const paymentIntent =
-      await getStripe().paymentIntents.retrieve(paymentIntentId);
+      await stripe.paymentIntents.retrieve(paymentIntentId);
 
     if (paymentIntent.status === "succeeded") {
-      // Convert the Stripe object to a plain object
       return {
         id: paymentIntent.id,
         amount: paymentIntent.amount,

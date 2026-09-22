@@ -1,6 +1,6 @@
 "use client";
 
-import { auth } from "@/firebase/firebaseClient";
+import { auth, isFirebaseConfigured } from "@/firebase/firebaseClient";
 import { useAuthStore } from "@/zustand/useAuthStore";
 import { useInitializeStores } from "@/zustand/useInitializeStores";
 import useProfileStore from "@/zustand/useProfileStore";
@@ -30,61 +30,100 @@ export default function Header() {
   useInitializeStores();
 
   useEffect(() => {
+    let cancelled = false;
+
     const syncAuthState = async () => {
       if (isSignedIn && user) {
+        if (!isFirebaseConfigured) {
+          if (!cancelled) {
+            queueMicrotask(() =>
+              setAuthDetails({
+                uid: user.id,
+                firebaseUid: "",
+                authEmail: user.emailAddresses[0]?.emailAddress || "",
+                authDisplayName: user.fullName || "",
+                authPhotoUrl: user.imageUrl,
+                authReady: true,
+                lastSignIn: serverTimestamp() as Timestamp,
+              })
+            );
+          }
+          return;
+        }
         try {
           const token = await getToken({ template: "integration_firebase" });
           const userCredentials = await signInWithCustomToken(
             auth,
             token || ""
           );
-          // Update Firebase user profile
           await updateProfile(userCredentials.user, {
             displayName: user.fullName,
             photoURL: user.imageUrl,
           });
-          setAuthDetails({
-            uid: user.id,
-            firebaseUid: userCredentials.user.uid,
-            authEmail: user.emailAddresses[0].emailAddress,
-            authDisplayName: user.fullName || "",
-            authPhotoUrl: user.imageUrl,
-            authReady: true,
-            lastSignIn: serverTimestamp() as Timestamp,
-          });
+          if (!cancelled) {
+            queueMicrotask(() =>
+              setAuthDetails({
+                uid: user.id,
+                firebaseUid: userCredentials.user.uid,
+                authEmail: user.emailAddresses[0]?.emailAddress || "",
+                authDisplayName: user.fullName || "",
+                authPhotoUrl: user.imageUrl,
+                authReady: true,
+                lastSignIn: serverTimestamp() as Timestamp,
+              })
+            );
+          }
         } catch (error) {
           console.error("Error signing in with custom token:", error);
-          clearAuthDetails();
+          if (!cancelled) {
+            queueMicrotask(() => clearAuthDetails());
+          }
         }
       } else {
-        await firebaseSignOut(auth);
-        clearAuthDetails();
+        if (isFirebaseConfigured) {
+          try {
+            await firebaseSignOut(auth);
+          } catch {
+            // ignore when already signed out / stub auth
+          }
+        }
+        if (!cancelled) {
+          queueMicrotask(() => clearAuthDetails());
+        }
       }
     };
 
     syncAuthState();
+    return () => {
+      cancelled = true;
+    };
   }, [clearAuthDetails, getToken, isSignedIn, setAuthDetails, user]);
 
   return (
-    <div className="flex h-14 items-center justify-between px-4 py-2">
+    <header className="flex h-14 items-center justify-between px-4 py-2 border-b border-slate-300 bg-white">
       <Link href="/" className="font-medium text-xl">
         Heygen API Demo
       </Link>
 
-      <SignedOut>
-        <SignInButton />
-      </SignedOut>
-      <SignedIn>
-        <div className="flex gap-2 items-center">
+      <nav aria-label="Primary" className="flex gap-2 items-center">
+        <SignedOut>
+          <SignInButton />
+        </SignedOut>
+        <SignedIn>
           {(profile.selectedAvatar || profile.selectedTalkingPhoto) && (
-            <Link href="/generate">Generate</Link>
+            <Link href="/generate" className="underline-offset-2 hover:underline">
+              Generate
+            </Link>
           )}
-
-          <Link href="/avatars">Avatars</Link>
-          <Link href="/profile">Profile</Link>
+          <Link href="/avatars" className="underline-offset-2 hover:underline">
+            Avatars
+          </Link>
+          <Link href="/profile" className="underline-offset-2 hover:underline">
+            Profile
+          </Link>
           <UserButton />
-        </div>
-      </SignedIn>
-    </div>
+        </SignedIn>
+      </nav>
+    </header>
   );
 }

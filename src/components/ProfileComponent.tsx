@@ -88,6 +88,7 @@ export default function ProfileComponent() {
           placeholder="Enter your ElevenLabs API Key"
         />
         <button
+          type="button"
           onClick={handleApiKeyChange}
           disabled={!isDirty}
           className="bg-blue-500 text-white px-3 py-2 rounded-md hover:bg-blue-600 disabled:opacity-50"

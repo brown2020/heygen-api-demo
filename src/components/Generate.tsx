@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/firebase/firebaseClient";
+import { db, isFirebaseConfigured } from "@/firebase/firebaseClient";
 import useProfileStore from "@/zustand/useProfileStore";
 import { generateTalkingPhotoVideo } from "@/actions/generateTalkingPhotoVideo";
 import { retrieveVideo } from "@/actions/retrieveVideo";
@@ -11,14 +11,15 @@ import AvatarCard from "@/components/AvatarCard";
 import { PulseLoader } from "react-spinners";
 import PreviousVideos from "@/components/PreviousVideos";
 import TextareaAutosize from "react-textarea-autosize";
+import { resolveVoiceId } from "@/libs/heygen-response";
 
 import { TalkingPhoto } from "@/types/heygen";
 
 export default function Generate() {
-  const router = useRouter();
   const profile = useProfileStore((state) => state.profile);
   const [itemDetails, setItemDetails] = useState<TalkingPhoto | null>(null);
   const [loading, setLoading] = useState(true);
+  const [missingSelection, setMissingSelection] = useState(false);
   const [script, setScript] = useState<string>("");
   const [audioUrl, setAudioUrl] = useState<string>("");
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
@@ -26,34 +27,69 @@ export default function Generate() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchDetails = async () => {
-      const selectedId = profile.selectedTalkingPhoto;
-      if (!selectedId) {
-        router.push("/avatars");
-        return;
-      }
+    let cancelled = false;
+    const selectedId = profile.selectedTalkingPhoto;
 
-      try {
-        const docRef = doc(db, "talkingPhotos", selectedId);
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-          const data = docSnap.data() as TalkingPhoto; // Cast data to the correct type
-          setItemDetails(data);
-        } else {
-          console.error("No such document found in Firestore!");
-          router.push("/avatars");
+    if (!selectedId) {
+      queueMicrotask(() => {
+        if (!cancelled) {
+          setMissingSelection(true);
+          setLoading(false);
         }
-      } catch (error) {
-        console.error("Error fetching document from Firestore:", error);
-        router.push("/avatars");
-      } finally {
-        setLoading(false);
-      }
-    };
+      });
+      return () => {
+        cancelled = true;
+      };
+    }
 
-    fetchDetails();
-  }, [profile.selectedTalkingPhoto, router]);
+    if (!isFirebaseConfigured) {
+      queueMicrotask(() => {
+        if (!cancelled) {
+          setError("Firebase is not configured.");
+          setLoading(false);
+        }
+      });
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    getDoc(doc(db, "talkingPhotos", selectedId))
+      .then((docSnap) => {
+        if (cancelled) return;
+        if (docSnap.exists()) {
+          queueMicrotask(() => {
+            if (!cancelled) {
+              setItemDetails(docSnap.data() as TalkingPhoto);
+              setMissingSelection(false);
+              setLoading(false);
+            }
+          });
+        } else {
+          queueMicrotask(() => {
+            if (!cancelled) {
+              setMissingSelection(true);
+              setLoading(false);
+            }
+          });
+        }
+      })
+      .catch((err) => {
+        console.error("Error fetching document from Firestore:", err);
+        if (!cancelled) {
+          queueMicrotask(() => {
+            if (!cancelled) {
+              setMissingSelection(true);
+              setLoading(false);
+            }
+          });
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [profile.selectedTalkingPhoto]);
 
   const handleGenerate = async () => {
     if (!profile.selectedTalkingPhoto) {
@@ -61,13 +97,7 @@ export default function Generate() {
       return;
     }
 
-    // Use a default voice ID if none is set.
-    // Using a common HeyGen voice ID (e.g., fluent English speaker) as fallback
-    // Also handling case where voice ID matches known invalid one "8awO799gQXhcAUkg9d9l"
-    let voiceId = itemDetails?.voiceId;
-    if (!voiceId || voiceId === "8awO799gQXhcAUkg9d9l") {
-      voiceId = "1bd001e7e50f421d891986aad5158bc8";
-    }
+    const voiceId = resolveVoiceId(itemDetails?.voiceId);
 
     setIsGenerating(true);
     setError(null);
@@ -77,8 +107,8 @@ export default function Generate() {
         profile.heygen_api_key || "",
         profile.selectedTalkingPhoto || "noTalkingPhotoId",
         voiceId,
-        script || undefined, // Use the script if provided
-        audioUrl || undefined // Use the audioUrl if provided
+        script || undefined,
+        audioUrl || undefined
       );
 
       if (result && result.video_id) {
@@ -103,8 +133,25 @@ export default function Generate() {
     }
   };
 
-  if (loading || !itemDetails) {
-    return <div>Loading...</div>;
+  if (loading) {
+    return <div role="status">Loading...</div>;
+  }
+
+  if (missingSelection || !itemDetails || !profile.selectedTalkingPhoto) {
+    return (
+      <div className="flex flex-col gap-4 max-w-lg">
+        <h2 className="text-2xl font-bold">Generate</h2>
+        <p className="text-gray-700">
+          Select a talking photo on the Avatars page before generating a video.
+        </p>
+        <Link
+          href="/avatars"
+          className="bg-blue-500 text-white px-4 py-2 rounded-md w-fit hover:bg-blue-600"
+        >
+          Go to Avatars
+        </Link>
+      </div>
+    );
   }
 
   return (
@@ -120,21 +167,30 @@ export default function Generate() {
         </div>
 
         <div className="flex flex-col gap-4 w-full">
+          <label htmlFor="generate-script" className="text-sm font-medium">
+            Script (optional)
+          </label>
           <TextareaAutosize
+            id="generate-script"
             minRows={3}
-            placeholder="Script (optional)"
+            placeholder="Example: Welcome to our product demo."
             value={script}
             onChange={(e) => setScript(e.target.value)}
             className="border rounded-sm p-2 resize-none"
           />
+          <label htmlFor="generate-audio-url" className="text-sm font-medium">
+            Audio URL (optional)
+          </label>
           <input
+            id="generate-audio-url"
             type="text"
-            placeholder="Audio URL (optional)"
+            placeholder="https://example.com/audio.mp3"
             value={audioUrl}
             onChange={(e) => setAudioUrl(e.target.value)}
             className="border rounded-sm p-2"
           />
           <button
+            type="button"
             onClick={handleGenerate}
             className="bg-blue-500 text-white px-4 py-2 h-10 rounded-md flex items-center justify-center"
             disabled={isGenerating}
@@ -145,7 +201,11 @@ export default function Generate() {
               "Generate Video"
             )}
           </button>
-          {error && <div className="text-red-500 mt-2">{error}</div>}
+          {error && (
+            <div className="text-red-500 mt-2" role="alert">
+              {error}
+            </div>
+          )}
         </div>
       </div>
 
@@ -156,7 +216,6 @@ export default function Generate() {
         </div>
       )}
 
-      {/* Render the PreviousVideos component */}
       <PreviousVideos talkingPhotoId={profile.selectedTalkingPhoto} />
     </div>
   );

@@ -1,24 +1,39 @@
+"use client";
+
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { db } from "@/firebase/firebaseClient";
+import { db, isFirebaseConfigured } from "@/firebase/firebaseClient";
 import { HeartIcon } from "lucide-react";
 import useProfileStore from "@/zustand/useProfileStore";
 import { TalkingPhoto } from "@/types/heygen";
+import AvatarCardFields from "@/components/AvatarCardFields";
 
 interface AvatarCardProps {
   id: string;
   talkingPhoto?: TalkingPhoto;
 }
 
+type Draft = {
+  talkingPhotoName: string;
+  project: string;
+  voiceId: string;
+};
+
+function draftFromSource(source: TalkingPhoto | null | undefined): Draft {
+  return {
+    talkingPhotoName: source?.talking_photo_name || "",
+    project: source?.project || "",
+    voiceId: source?.voiceId || "",
+  };
+}
+
 export default function AvatarCard({ id, talkingPhoto }: AvatarCardProps) {
-  const [favoriteOverride, setFavoriteOverride] = useState<boolean | null>(null);
-  const [draft, setDraft] = useState(() => ({
-    talkingPhotoName: talkingPhoto?.talking_photo_name || "",
-    project: talkingPhoto?.project || "",
-    voiceId: talkingPhoto?.voiceId || "",
-  }));
+  const [favoriteOverride, setFavoriteOverride] = useState<boolean | null>(
+    null
+  );
+  const [draft, setDraft] = useState(() => draftFromSource(talkingPhoto));
   const [fetchedTalkingPhoto, setFetchedTalkingPhoto] =
     useState<TalkingPhoto | null>(null);
   const [isDirty, setIsDirty] = useState(false);
@@ -32,57 +47,53 @@ export default function AvatarCard({ id, talkingPhoto }: AvatarCardProps) {
   const isOnGeneratePage = pathname === "/generate";
 
   useEffect(() => {
-    const fetchData = async () => {
-      const docRef = doc(db, "talkingPhotos", id);
-      const docSnap = await getDoc(docRef);
+    if (talkingPhoto || !isFirebaseConfigured) return;
+    let cancelled = false;
 
-      if (docSnap.exists()) {
-        setFetchedTalkingPhoto(docSnap.data() as TalkingPhoto);
-      }
+    getDoc(doc(db, "talkingPhotos", id))
+      .then((docSnap) => {
+        if (cancelled || !docSnap.exists()) return;
+        queueMicrotask(() => {
+          if (!cancelled) {
+            setFetchedTalkingPhoto(docSnap.data() as TalkingPhoto);
+          }
+        });
+      })
+      .catch((err) => {
+        console.error("AvatarCard fetch failed:", err);
+      });
+
+    return () => {
+      cancelled = true;
     };
-
-    if (!talkingPhoto) fetchData();
   }, [id, talkingPhoto]);
 
   const source = talkingPhoto ?? fetchedTalkingPhoto;
-  const favorite = favoriteOverride ?? (source?.favorite ?? false);
-
-  const displayed = useMemo(() => {
-    if (isDirty) return draft;
-    return {
-      talkingPhotoName: source?.talking_photo_name || "",
-      project: source?.project || "",
-      voiceId: source?.voiceId || "",
-    };
-  }, [draft, isDirty, source?.project, source?.talking_photo_name, source?.voiceId]);
-
+  const favorite = favoriteOverride ?? source?.favorite ?? false;
+  const displayed = useMemo(
+    () => (isDirty ? draft : draftFromSource(source)),
+    [draft, isDirty, source]
+  );
   const previewImageUrl = source?.preview_image_url || "";
 
   const toggleFavorite = async () => {
-    const newFavoriteStatus = !favorite;
-    setFavoriteOverride(newFavoriteStatus);
-
-    const docRef = doc(db, "talkingPhotos", id);
-    await setDoc(docRef, { favorite: newFavoriteStatus }, { merge: true });
+    if (!isFirebaseConfigured) return;
+    const next = !favorite;
+    setFavoriteOverride(next);
+    await setDoc(doc(db, "talkingPhotos", id), { favorite: next }, { merge: true });
   };
 
   const updateDraftField =
-    (field: keyof typeof draft) => (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (!isDirty) {
-        setDraft({
-          talkingPhotoName: source?.talking_photo_name || "",
-          project: source?.project || "",
-          voiceId: source?.voiceId || "",
-        });
-      }
+    (field: keyof Draft) => (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (!isDirty) setDraft(draftFromSource(source));
       setIsDirty(true);
       setDraft((prev) => ({ ...prev, [field]: e.target.value }));
     };
 
   const saveDetails = async () => {
-    const docRef = doc(db, "talkingPhotos", id);
+    if (!isFirebaseConfigured) return;
     await setDoc(
-      docRef,
+      doc(db, "talkingPhotos", id),
       {
         talking_photo_name: displayed.talkingPhotoName,
         project: displayed.project,
@@ -96,14 +107,14 @@ export default function AvatarCard({ id, talkingPhoto }: AvatarCardProps) {
   const selectTalkingPhoto = async () => {
     if (!isSelected) {
       updateProfile({ selectedTalkingPhoto: id });
-    } else {
-      router.push("/generate"); // Navigate to /generate if already selected
+      return;
     }
+    router.push("/generate");
   };
 
   return (
     <div
-      className={`relative border p-4 rounded-md shadow cursor-pointer ${
+      className={`relative border p-4 rounded-md shadow ${
         isSelected ? "border-blue-500" : "border-gray-300"
       }`}
     >
@@ -111,23 +122,29 @@ export default function AvatarCard({ id, talkingPhoto }: AvatarCardProps) {
         <h3 className="font-bold mb-2">
           {displayed.talkingPhotoName || "Untitled Talking Photo"}
         </h3>
-        <HeartIcon
+        <button
+          type="button"
+          aria-label={favorite ? "Remove from favorites" : "Add to favorites"}
           className="cursor-pointer"
           onClick={(e) => {
             e.stopPropagation();
             toggleFavorite();
           }}
-          strokeWidth={favorite ? 0 : 1}
-          fill={favorite ? "red" : "none"}
-          color={favorite ? "red" : "currentColor"}
-          size={24}
-        />
+        >
+          <HeartIcon
+            strokeWidth={favorite ? 0 : 1}
+            fill={favorite ? "red" : "none"}
+            color={favorite ? "red" : "currentColor"}
+            size={24}
+            aria-hidden
+          />
+        </button>
       </div>
       <div>
         {previewImageUrl ? (
           <Image
             src={previewImageUrl}
-            alt={displayed.talkingPhotoName}
+            alt={displayed.talkingPhotoName || "Talking photo preview"}
             width={512}
             height={512}
             className="w-48 h-auto rounded-sm transition-transform transform hover:scale-105"
@@ -138,77 +155,16 @@ export default function AvatarCard({ id, talkingPhoto }: AvatarCardProps) {
           </div>
         )}
       </div>
-      <div className="mt-2">
-        <label
-          className="text-xs px-1 text-gray-600"
-          htmlFor="talkingPhotoName"
-        >
-          Talking Photo Name
-        </label>
-        <input
-          id="talkingPhotoName"
-          type="text"
-          value={displayed.talkingPhotoName}
-          onChange={updateDraftField("talkingPhotoName")}
-          placeholder="Talking Photo Name"
-          className="border rounded-sm p-1 w-full"
-        />
-        <label
-          className="text-xs px-1 text-gray-600 mt-2 block"
-          htmlFor="project"
-        >
-          Project
-        </label>
-        <input
-          id="project"
-          type="text"
-          value={displayed.project}
-          onChange={updateDraftField("project")}
-          placeholder="Project"
-          className="border rounded-sm p-1 w-full"
-        />
-        <label
-          className="text-xs px-1 text-gray-600 mt-2 block"
-          htmlFor="voiceId"
-        >
-          Voice ID
-        </label>
-        <input
-          id="voiceId"
-          type="text"
-          value={displayed.voiceId}
-          onChange={updateDraftField("voiceId")}
-          placeholder="Voice ID"
-          className="border rounded-sm p-1 w-full"
-        />
-        <div className="flex justify-between items-center mt-2">
-          <div className="flex space-x-2">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                saveDetails();
-              }}
-              className={`bg-blue-500 text-white px-3 py-2 rounded-md ${
-                isDirty ? "hover:bg-blue-600" : "opacity-50 cursor-not-allowed"
-              }`}
-              disabled={!isDirty}
-            >
-              Save
-            </button>
-            {!isOnGeneratePage && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  selectTalkingPhoto();
-                }}
-                className="bg-green-500 text-white px-3 py-2 rounded-md hover:bg-green-600"
-              >
-                {isSelected ? "Go to Generate" : "Select"}
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
+      <AvatarCardFields
+        id={id}
+        displayed={displayed}
+        isDirty={isDirty}
+        isOnGeneratePage={isOnGeneratePage}
+        isSelected={isSelected}
+        onFieldChange={updateDraftField}
+        onSave={saveDetails}
+        onSelect={selectTalkingPhoto}
+      />
     </div>
   );
 }

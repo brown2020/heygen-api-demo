@@ -1,29 +1,9 @@
 "use server";
 
 import type { HeygenAvatarResponse, TalkingPhoto } from "@/types/heygen";
+import { extractTalkingPhotos } from "@/libs/heygen-response";
 import { auth } from "@clerk/nextjs/server";
 import axios from "axios";
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function extractTalkingPhotos(payload: unknown): TalkingPhoto[] {
-  if (!isRecord(payload)) return [];
-
-  const data = payload.data;
-  if (isRecord(data)) {
-    const inner = data.data;
-    if (isRecord(inner) && Array.isArray(inner.talking_photos)) {
-      return inner.talking_photos as TalkingPhoto[];
-    }
-    if (Array.isArray(inner)) return inner as TalkingPhoto[];
-    if (Array.isArray(data.talking_photos)) return data.talking_photos as TalkingPhoto[];
-  }
-
-  if (Array.isArray(data)) return data as TalkingPhoto[];
-  return [];
-}
 
 async function fetchTalkingPhotos(headers: Record<string, string>) {
   // HeyGen has changed/varied these endpoints over time. We treat 404 as "not supported"
@@ -37,7 +17,8 @@ async function fetchTalkingPhotos(headers: Record<string, string>) {
   for (const url of candidateUrls) {
     const res = await axios.get(url, {
       headers,
-      validateStatus: (status) => (status >= 200 && status < 300) || status === 404,
+      validateStatus: (status) =>
+        (status >= 200 && status < 300) || status === 404,
     });
     if (res.status === 404) continue;
     return extractTalkingPhotos(res.data);
@@ -57,21 +38,21 @@ export async function getHeygenAvatars(
       "Content-Type": "application/json",
     };
 
-    // Fetch avatars and talking photos. Talking photos endpoint varies; we fall back gracefully.
     const [avatarsRes, talkingPhotos] = await Promise.all([
       axios.get("https://api.heygen.com/v2/avatars", { headers }),
       fetchTalkingPhotos(headers),
     ]);
 
-    const avatars =
-      avatarsRes.data?.data?.avatars || [];
+    const avatars = avatarsRes.data?.data?.avatars || [];
 
-    // Some responses may still include talking_photos under v2/avatars; merge + de-dupe.
-    const legacyTalkingPhotos = Array.isArray(avatarsRes.data?.data?.talking_photos)
+    const legacyTalkingPhotos = Array.isArray(
+      avatarsRes.data?.data?.talking_photos
+    )
       ? (avatarsRes.data.data.talking_photos as TalkingPhoto[])
       : [];
     const mergedTalkingPhotos = [...talkingPhotos, ...legacyTalkingPhotos].filter(
-      (p, idx, arr) => arr.findIndex((x) => x.talking_photo_id === p.talking_photo_id) === idx
+      (p, idx, arr) =>
+        arr.findIndex((x) => x.talking_photo_id === p.talking_photo_id) === idx
     );
 
     return {

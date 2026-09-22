@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuthStore } from "@/zustand/useAuthStore";
-import { SignedIn, SignedOut } from "@clerk/nextjs";
+import { SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
 import Footer from "./Footer";
@@ -16,7 +16,7 @@ export default function Home() {
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-center h-full">
         <div className="flex flex-col gap-5 bg-white shadow-md rounded-lg p-8 max-w-md w-full">
-          <div className="text-2xl font-bold text-center">Heygen API Demo</div>
+          <h1 className="text-2xl font-bold text-center">Heygen API Demo</h1>
 
           <SignedIn>
             <div className="flex flex-col items-center gap-3">
@@ -26,7 +26,7 @@ export default function Home() {
                     src={photoUrl}
                     width={256}
                     height={256}
-                    alt={"user"}
+                    alt={fullName ? `${fullName} profile photo` : "User profile photo"}
                     priority
                   />
                 )}
@@ -48,30 +48,40 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="flex justify-center">
-              {firebaseUid && (
-                <Link
-                  href="/avatars"
-                  className="p-2 bg-blue-500 text-white rounded-md w-32 text-center inline-block hover:bg-blue-600"
-                >
-                  Avatars
-                </Link>
-              )}
+            <div className="flex justify-center gap-3">
+              <Link
+                href="/avatars"
+                className="p-2 bg-blue-500 text-white rounded-md w-32 text-center inline-block hover:bg-blue-600"
+              >
+                Avatars
+              </Link>
+              <Link
+                href="/profile"
+                className="p-2 bg-slate-700 text-white rounded-md w-32 text-center inline-block hover:bg-slate-800"
+              >
+                Profile
+              </Link>
             </div>
           </SignedIn>
 
           <SignedOut>
-            <div className="flex flex-col items-center mb-4">
-              <div className="text-lg font-medium text-gray-700 mb-2 text-center">
+            <div className="flex flex-col items-center mb-4 gap-3">
+              <p className="text-lg font-medium text-gray-700 text-center">
                 Welcome to the Heygen API Demo!
-              </div>
-              <div className="text-sm text-gray-600 text-center">
-                This demo showcases the capabilities of the Heygen API, allowing
-                you to interact with various features and explore the potential
-                of integrating Heygen into your projects. Sign in to start
-                exploring the features, or learn more about what you can achieve
-                with this powerful tool.
-              </div>
+              </p>
+              <p className="text-sm text-gray-600 text-center">
+                Sign in with Clerk to sync talking photos, generate avatar
+                videos via HeyGen, and manage credits. Authentication UI is
+                hosted by Clerk (no custom email/password forms in this app).
+              </p>
+              <SignInButton mode="modal">
+                <button
+                  type="button"
+                  className="p-2 bg-blue-500 text-white rounded-md w-40 text-center hover:bg-blue-600"
+                >
+                  Sign in
+                </button>
+              </SignInButton>
             </div>
           </SignedOut>
         </div>

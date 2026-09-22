@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { collection, onSnapshot, query } from "firebase/firestore";
-import { db } from "@/firebase/firebaseClient";
+import { db, isFirebaseConfigured } from "@/firebase/firebaseClient";
 
 interface PreviousVideosProps {
   talkingPhotoId: string;
@@ -19,7 +19,7 @@ export default function PreviousVideos({
   const [videos, setVideos] = useState<Video[]>([]);
 
   useEffect(() => {
-    if (!talkingPhotoId) return;
+    if (!talkingPhotoId || !isFirebaseConfigured) return;
 
     // Correctly reference the subcollection under talkingPhotos
     const videosCollectionRef = collection(

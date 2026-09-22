@@ -1,0 +1,24 @@
+name: ci
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    # Client NEXT_PUBLIC_* / Clerk / Stripe / Firebase are optional for this gate:
+    # firebaseClient and firebaseAdmin skip or soft-fail init when unset so
+    # lint/typecheck/test/build succeed. Never inline keys here — if a future
+    # smoke job needs web config, inject only via ${{ secrets.* }} on that job
+    # (not this gate), and prefer deferred client init.
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build

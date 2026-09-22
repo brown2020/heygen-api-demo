@@ -2,12 +2,16 @@
 
 import { useAuthStore } from "@/zustand/useAuthStore";
 import { usePaymentsStore } from "@/zustand/usePaymentsStore";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { formatUtcDateTime } from "@/libs/format";
 
 export default function PaymentsPage() {
   const uid = useAuthStore((state) => state.uid);
   const { payments, paymentsLoading, paymentsError, fetchPayments } =
     usePaymentsStore();
+  const [formattedDates, setFormattedDates] = useState<Record<string, string>>(
+    {}
+  );
 
   useEffect(() => {
     if (uid) {
@@ -15,12 +19,24 @@ export default function PaymentsPage() {
     }
   }, [uid, fetchPayments]);
 
+  useEffect(() => {
+    const next: Record<string, string> = {};
+    for (const payment of payments) {
+      next[payment.id] = formatUtcDateTime(
+        payment.createdAt ? payment.createdAt.toMillis() : null
+      );
+    }
+    queueMicrotask(() => setFormattedDates(next));
+  }, [payments]);
+
   return (
     <div className="flex flex-col h-full w-full max-w-4xl mx-auto gap-4">
-      <div className="text-3xl font-bold">Payments</div>
+      <h1 className="text-3xl font-bold">Payments</h1>
 
-      {paymentsLoading && <div>Loading payments...</div>}
-      {paymentsError && <div>Error: {paymentsError}</div>}
+      {paymentsLoading && <div role="status">Loading payments...</div>}
+      {paymentsError && (
+        <div role="alert">Error: {paymentsError}</div>
+      )}
       {!paymentsLoading && !paymentsError && payments.length === 0 && (
         <p className="text-gray-500">No payments yet.</p>
       )}
@@ -34,10 +50,7 @@ export default function PaymentsPage() {
               <div>ID: {payment.id}</div>
               <div>Amount: ${payment.amount / 100}</div>
               <div>
-                Created At:{" "}
-                {payment.createdAt
-                  ? payment.createdAt.toDate().toLocaleString()
-                  : "N/A"}
+                Created At: {formattedDates[payment.id] ?? "…"}
               </div>
               <div>Status: {payment.status}</div>
             </div>

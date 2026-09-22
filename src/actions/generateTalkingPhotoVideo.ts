@@ -33,7 +33,8 @@ export async function generateTalkingPhotoVideo(
     const response = await axios.post(
       "https://api.heygen.com/v2/video/generate",
       {
-        test: false,
+        // Prefer fixtures when HEYGEN_USE_FIXTURES=true (eval/CI) to avoid paid credit burn.
+        test: process.env.HEYGEN_USE_FIXTURES === "true",
         video_inputs: [
           {
             character: {

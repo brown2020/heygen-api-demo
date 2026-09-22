@@ -3,6 +3,8 @@
 import axios from "axios";
 import { adminBucket, adminDb } from "@/firebase/firebaseAdmin";
 import { auth } from "@clerk/nextjs/server";
+import { after } from "next/server";
+import { mapHeygenVideoStatus } from "@/libs/heygen-response";
 
 interface RetrieveVideoResponse {
   status: "processing" | "completed" | "failed" | "pending";
@@ -23,7 +25,12 @@ export async function retrieveVideo(
   let attempts = 0;
   while (attempts < 600) {
     attempts++;
-    if (isDebug) console.log(`Checking video status... Attempt: ${attempts}`);
+    if (isDebug) {
+      const attempt = attempts;
+      after(() => {
+        console.log(`Checking video status... Attempt: ${attempt}`);
+      });
+    }
 
     try {
       const response = await axios.get(
@@ -39,20 +46,31 @@ export async function retrieveVideo(
       );
 
       if (response.status === 200 && response.data.code === 100) {
-        const data = response.data.data;
-        const status = data.status;
-        if (isDebug) console.log(`Current video status: ${status}`);
+        const mapped = mapHeygenVideoStatus(response.data);
+        if (isDebug) {
+          after(() => {
+            console.log(`Current video status: ${mapped.status}`);
+          });
+        }
 
-        if (status === "completed") {
-          if (isDebug)
-            console.log("Video completed, downloading from URL:", data.video_url);
+        if (mapped.status === "completed") {
+          const videoUrlRemote = mapped.video_url;
+          if (!videoUrlRemote) {
+            return {
+              status: "failed",
+              error: "Completed video missing download URL.",
+            };
+          }
+          if (isDebug) {
+            after(() => {
+              console.log("Video completed, downloading from URL:", videoUrlRemote);
+            });
+          }
 
-          // Download the video from the provided video URL
-          const videoResponse = await axios.get(data.video_url, {
-            responseType: "arraybuffer", // Get the video as a buffer
+          const videoResponse = await axios.get(videoUrlRemote, {
+            responseType: "arraybuffer",
           });
 
-          // Upload to Firebase Storage
           const file = adminBucket.file(
             `videos/${talkingPhotoId}/${videoId}.mp4`
           );
@@ -61,17 +79,22 @@ export async function retrieveVideo(
               contentType: "video/mp4",
             },
           });
-          if (isDebug) console.log("Video uploaded to Firebase Storage.");
+          if (isDebug) {
+            after(() => {
+              console.log("Video uploaded to Firebase Storage.");
+            });
+          }
 
-          // Generate a signed URL with a very long expiration (100 years)
           const [videoUrl] = await file.getSignedUrl({
             action: "read",
-            expires: "01-01-2124", // Set the expiration date 100 years in the future
+            expires: "01-01-2124",
           });
-          if (isDebug)
-            console.log("Generated signed URL with long expiration:", videoUrl);
+          if (isDebug) {
+            after(() => {
+              console.log("Generated signed URL with long expiration:", videoUrl);
+            });
+          }
 
-          // Save the signed URL to Firestore
           const docRef = adminDb
             .collection("talkingPhotos")
             .doc(talkingPhotoId)
@@ -80,37 +103,37 @@ export async function retrieveVideo(
 
           await docRef.set({
             video_url: videoUrl,
-            thumbnail_url: data.thumbnail_url || null,
+            thumbnail_url: mapped.thumbnail_url || null,
             created_at: new Date(),
           });
-          if (isDebug) console.log("Video URL saved to Firestore.");
+          if (isDebug) {
+            after(() => {
+              console.log("Video URL saved to Firestore.");
+            });
+          }
 
           return {
-            status: status,
+            status: "completed",
             video_url: videoUrl,
-            thumbnail_url: data.thumbnail_url,
+            thumbnail_url: mapped.thumbnail_url,
           };
-        } else if (status === "failed") {
-          console.error("Video rendering failed:", data.error);
+        } else if (mapped.status === "failed") {
+          console.error("Video rendering failed:", mapped.error);
           return {
-            status: status,
-            error: data.error || "An error occurred during video rendering.",
+            status: "failed",
+            error: mapped.error || "An error occurred during video rendering.",
           };
         }
       } else {
         console.error("Error fetching video status:", response.data.message);
-        // Do not return null here, allow retry
       }
     } catch (error) {
       console.error("Error fetching video status (will retry):", error);
-      // Do not return null here, allow retry
     }
 
-    // Wait for the poll interval before the next check
     await new Promise((resolve) => setTimeout(resolve, pollInterval));
   }
 
   console.error("Video retrieval timed out after max attempts.");
   return null;
 }
-

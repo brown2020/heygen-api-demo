@@ -3,6 +3,8 @@
 import { useAuthStore } from "@/zustand/useAuthStore";
 import { usePaymentsStore } from "@/zustand/usePaymentsStore";
 import useProfileStore from "@/zustand/useProfileStore";
+import { creditsForPaymentAmountCents } from "@/libs/heygen-response";
+import { formatUtcDateTime } from "@/libs/format";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { validatePaymentIntent } from "@/actions/paymentActions";
@@ -29,71 +31,92 @@ export default function PaymentSuccessPage({ payment_intent }: Props) {
   const uid = useAuthStore((state) => state.uid);
 
   useEffect(() => {
+    let cancelled = false;
+
     if (!payment_intent) {
-      setMessage("No payment intent found");
-      setLoading(false);
-      return;
+      queueMicrotask(() => {
+        if (!cancelled) {
+          setMessage("No payment intent found");
+          setLoading(false);
+        }
+      });
+      return () => {
+        cancelled = true;
+      };
     }
 
-    const handlePaymentSuccess = async () => {
+    if (!uid) {
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    (async () => {
       try {
         const data = await validatePaymentIntent(payment_intent);
+        if (cancelled) return;
 
         if (data.status === "succeeded") {
-          // Check if payment is already processed
           const existingPayment = await checkIfPaymentProcessed(data.id);
+          if (cancelled) return;
+
           if (existingPayment) {
-            setMessage("Payment has already been processed.");
-
-            // Convert Timestamp to milliseconds before setting state
-            if (existingPayment.createdAt) {
-              setCreated(existingPayment.createdAt.toMillis());
-            } else {
-              setCreated(0); // Fallback if createdAt is null
-            }
-
-            setId(existingPayment.id);
-            setAmount(existingPayment.amount);
-            setStatus(existingPayment.status);
-            setLoading(false);
+            queueMicrotask(() => {
+              if (cancelled) return;
+              setMessage("Payment has already been processed.");
+              setCreated(existingPayment.createdAt?.toMillis?.() ?? 0);
+              setId(existingPayment.id);
+              setAmount(existingPayment.amount);
+              setStatus(existingPayment.status);
+              setLoading(false);
+            });
             return;
           }
 
-          setMessage("Payment successful");
-          setCreated(data.created * 1000); // Assuming `data.created` is a UNIX timestamp in seconds
-          setId(data.id);
-          setAmount(data.amount);
-          setStatus(data.status);
+          queueMicrotask(() => {
+            if (cancelled) return;
+            setMessage("Payment successful");
+            setCreated(data.created * 1000);
+            setId(data.id);
+            setAmount(data.amount);
+            setStatus(data.status);
+          });
 
-          // Add payment to store
           await addPayment({
             id: data.id,
             amount: data.amount,
             status: data.status,
           });
+          if (cancelled) return;
 
-          // Add credits to profile
-          const creditsToAdd = data.amount + 1;
-          await addCredits(creditsToAdd);
+          await addCredits(creditsForPaymentAmountCents(data.amount));
         } else {
           console.error("Payment validation failed:", data.status);
-          setMessage("Payment validation failed");
+          if (!cancelled) {
+            queueMicrotask(() => setMessage("Payment validation failed"));
+          }
         }
       } catch (error) {
         console.error("Error handling payment success:", error);
-        setMessage("Error handling payment success");
+        if (!cancelled) {
+          queueMicrotask(() => setMessage("Error handling payment success"));
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          queueMicrotask(() => setLoading(false));
+        }
       }
-    };
+    })();
 
-    if (uid) handlePaymentSuccess();
+    return () => {
+      cancelled = true;
+    };
   }, [payment_intent, addPayment, checkIfPaymentProcessed, addCredits, uid]);
 
   return (
     <main className="max-w-6xl flex flex-col gap-2.5 mx-auto p-10 text-black text-center border m-10 rounded-md border-black">
       {loading ? (
-        <div>validating...</div>
+        <div role="status">validating...</div>
       ) : id ? (
         <div className="mb-10">
           <h1 className="text-4xl font-extrabold mb-2">Thank you!</h1>
@@ -103,11 +126,12 @@ export default function PaymentSuccessPage({ payment_intent }: Props) {
           </div>
           <div>Uid: {uid}</div>
           <div>Id: {id}</div>
-          <div>Created: {new Date(created).toLocaleString()}</div>
+          <div>Created: {formatUtcDateTime(created)}</div>
           <div>Status: {status}</div>
+          {message && <div className="sr-only">{message}</div>}
         </div>
       ) : (
-        <div>{message}</div>
+        <div role="alert">{message}</div>
       )}
 
       <Link
