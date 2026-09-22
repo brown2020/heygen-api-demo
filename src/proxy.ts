@@ -1,4 +1,7 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { isClerkConfigured } from "@/libs/clerk-config";
 
 const isProtectedRoute = createRouteMatcher([
   "/avatars(.*)",
@@ -8,15 +11,20 @@ const isProtectedRoute = createRouteMatcher([
   "/profile(.*)",
 ]);
 
-export default clerkMiddleware(async (auth, req) => {
+const clerkProxy = clerkMiddleware(async (auth, req) => {
   if (isProtectedRoute(req)) await auth.protect();
 });
 
+export default function proxy(req: NextRequest, event: unknown) {
+  if (!isClerkConfigured) {
+    return NextResponse.next();
+  }
+  return (clerkProxy as (req: NextRequest, event: unknown) => unknown)(req, event);
+}
+
 export const config = {
   matcher: [
-    // Skip Next.js internals and all static files, unless found in search params
-    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
-    // Always run for API routes
+    "/((?!_next|[^?]*\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
     "/(api|trpc)(.*)",
   ],
 };

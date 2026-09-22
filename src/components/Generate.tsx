@@ -146,7 +146,7 @@ export default function Generate() {
         </p>
         <Link
           href="/avatars"
-          className="bg-blue-500 text-white px-4 py-2 rounded-md w-fit hover:bg-blue-600"
+          className="bg-blue-700 text-white px-4 py-2 rounded-md w-fit hover:bg-blue-800"
         >
           Go to Avatars
         </Link>
@@ -192,7 +192,7 @@ export default function Generate() {
           <button
             type="button"
             onClick={handleGenerate}
-            className="bg-blue-500 text-white px-4 py-2 h-10 rounded-md flex items-center justify-center"
+            className="bg-blue-700 text-white px-4 py-2 h-10 rounded-md flex items-center justify-center"
             disabled={isGenerating}
           >
             {isGenerating ? (

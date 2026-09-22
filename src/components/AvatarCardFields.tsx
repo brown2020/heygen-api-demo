@@ -82,8 +82,8 @@ export default function AvatarCardFields({
               e.stopPropagation();
               onSave();
             }}
-            className={`bg-blue-500 text-white px-3 py-2 rounded-md ${
-              isDirty ? "hover:bg-blue-600" : "opacity-50 cursor-not-allowed"
+            className={`bg-blue-700 text-white px-3 py-2 rounded-md ${
+              isDirty ? "hover:bg-blue-800" : "opacity-50 cursor-not-allowed"
             }`}
             disabled={!isDirty}
           >

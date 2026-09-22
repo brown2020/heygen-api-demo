@@ -1,6 +1,7 @@
 "use client";
 
 import { auth, isFirebaseConfigured } from "@/firebase/firebaseClient";
+import { isClerkConfigured } from "@/libs/clerk-config";
 import { useAuthStore } from "@/zustand/useAuthStore";
 import { useInitializeStores } from "@/zustand/useInitializeStores";
 import useProfileStore from "@/zustand/useProfileStore";
@@ -21,7 +22,20 @@ import { serverTimestamp, Timestamp } from "firebase/firestore";
 import Link from "next/link";
 import { useEffect } from "react";
 
-export default function Header() {
+function NavShell({ children }: { children: React.ReactNode }) {
+  return (
+    <header className="flex h-14 items-center justify-between px-4 py-2 border-b border-slate-300 bg-white">
+      <Link href="/" className="font-medium text-xl">
+        Heygen API Demo
+      </Link>
+      <nav aria-label="Primary" className="flex gap-2 items-center">
+        {children}
+      </nav>
+    </header>
+  );
+}
+
+function HeaderWithClerk() {
   const { getToken, isSignedIn } = useAuth();
   const { user } = useUser();
   const setAuthDetails = useAuthStore((state) => state.setAuthDetails);
@@ -84,7 +98,7 @@ export default function Header() {
           try {
             await firebaseSignOut(auth);
           } catch {
-            // ignore when already signed out / stub auth
+            // ignore
           }
         }
         if (!cancelled) {
@@ -100,30 +114,47 @@ export default function Header() {
   }, [clearAuthDetails, getToken, isSignedIn, setAuthDetails, user]);
 
   return (
-    <header className="flex h-14 items-center justify-between px-4 py-2 border-b border-slate-300 bg-white">
-      <Link href="/" className="font-medium text-xl">
-        Heygen API Demo
-      </Link>
-
-      <nav aria-label="Primary" className="flex gap-2 items-center">
-        <SignedOut>
-          <SignInButton />
-        </SignedOut>
-        <SignedIn>
-          {(profile.selectedAvatar || profile.selectedTalkingPhoto) && (
-            <Link href="/generate" className="underline-offset-2 hover:underline">
-              Generate
-            </Link>
-          )}
-          <Link href="/avatars" className="underline-offset-2 hover:underline">
-            Avatars
+    <NavShell>
+      <SignedOut>
+        <SignInButton />
+      </SignedOut>
+      <SignedIn>
+        {(profile.selectedAvatar || profile.selectedTalkingPhoto) && (
+          <Link href="/generate" className="underline-offset-2 hover:underline">
+            Generate
           </Link>
-          <Link href="/profile" className="underline-offset-2 hover:underline">
-            Profile
-          </Link>
-          <UserButton />
-        </SignedIn>
-      </nav>
-    </header>
+        )}
+        <Link href="/avatars" className="underline-offset-2 hover:underline">
+          Avatars
+        </Link>
+        <Link href="/profile" className="underline-offset-2 hover:underline">
+          Profile
+        </Link>
+        <UserButton />
+      </SignedIn>
+    </NavShell>
   );
+}
+
+function HeaderWithoutClerk() {
+  return (
+    <NavShell>
+      <span className="text-sm text-slate-600" role="status">
+        Sign-in unavailable (Clerk not configured)
+      </span>
+      <Link href="/avatars" className="underline-offset-2 hover:underline">
+        Avatars
+      </Link>
+      <Link href="/profile" className="underline-offset-2 hover:underline">
+        Profile
+      </Link>
+    </NavShell>
+  );
+}
+
+export default function Header() {
+  if (!isClerkConfigured) {
+    return <HeaderWithoutClerk />;
+  }
+  return <HeaderWithClerk />;
 }

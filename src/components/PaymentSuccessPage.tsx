@@ -136,7 +136,7 @@ export default function PaymentSuccessPage({ payment_intent }: Props) {
 
       <Link
         href="/profile"
-        className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+        className="px-4 py-2 bg-blue-700 text-white rounded-md hover:bg-blue-800"
       >
         View Account
       </Link>

@@ -89,7 +89,7 @@ export default function Avatars() {
           <button
             type="button"
             onClick={fetchTalkingPhotos}
-            className="bg-blue-500 text-white px-3 py-2 rounded-md hover:bg-blue-600 flex items-center justify-center"
+            className="bg-blue-700 text-white px-3 py-2 rounded-md hover:bg-blue-800 flex items-center justify-center"
             disabled={isLoading}
           >
             {isLoading ? (

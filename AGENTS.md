@@ -21,6 +21,7 @@ Production deployment target: **Vercel** (when linked). Prefer fixtures/mocks fo
 - `firebaseClient` must skip `initializeApp` / `getAuth` when public config is missing so SSG/build tolerates empty secrets.
 - `firebaseAdmin` must soft-fail init when service-account env is missing (expected in CI build).
 - Prefer deferred / guarded client init over depending on secret population.
+- `isClerkConfigured` skips ClerkProvider / clerkMiddleware when publishable key is missing so CI/SSG and empty-secret smoke still render.
 
 ## Package scripts
 
