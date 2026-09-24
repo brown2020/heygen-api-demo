@@ -1,208 +1,116 @@
-# Heygen API Demo
+# HeyGen API Demo
 
-This is a demo application built with [Next.js 16](https://nextjs.org/), [Firebase](https://firebase.google.com/), [Tailwind CSS](https://tailwindcss.com/), and [TypeScript](https://www.typescriptlang.org/). The app demonstrates the use of the [Heygen API](https://heygen.com/) to generate videos using avatars and talking photos, allowing users to interact with AI-driven content creation.
+Demo Next.js app that generates talking-photo videos with the [HeyGen](https://www.heygen.com/) API. Sign in with Clerk, save your HeyGen API key on your profile, sync talking photos / avatars, generate videos (with status polling), and buy credits via Stripe. Live demo: [https://heygen-api-demo.vercel.app](https://heygen-api-demo.vercel.app).
 
 ## Features
 
-- **Authentication**: Integrated user authentication using [Clerk](https://clerk.dev/).
-- **Payments**: Payment handling with [Stripe](https://stripe.com/).
-- **Data Management**: State management using [Zustand](https://github.com/pmndrs/zustand).
-- **Heygen API Integration**: Generate videos with AI avatars and talking photos.
-- **Server Actions**: Utilize Next.js server actions for secure API calls.
-- **Real-Time Feedback**: Display status and error messages during the video generation process.
-- **Polling for Status Updates**: Uses a polling mechanism to check the status of video generation, with the option to implement webhooks for more efficient updates.
-- **UI Components**: Customizable and responsive UI components with Tailwind CSS.
+- **Clerk authentication** (hosted sign-in / user button); optional Firebase custom-token bridge for Firestore
+- **HeyGen integration** — list avatars and talking photos, generate talking-photo videos (text / audio / silence voice), poll video status
+- **Per-user HeyGen API key** stored on the profile (BYOK)
+- **Previous videos** gallery and generation UI
+- **Stripe credits** — PaymentIntent checkout and payment history
+- **Zustand** stores for auth, profile, and payments
+- Soft route protection via Clerk middleware (`src/proxy.ts`)
 
-## Getting Started
+## Tech stack
+
+| Layer | Tech |
+| --- | --- |
+| Framework | Next.js ^16.3.6 (App Router) |
+| UI | React ^19.2.5, Tailwind CSS ^4.2.4, Lucide |
+| Language | TypeScript ^6.0.3 |
+| Auth | Clerk (`@clerk/nextjs` 6.39.3) |
+| Data | Firebase ^12.12.1 + Firebase Admin ^13.8.0 |
+| Payments | Stripe ^22 + React Stripe.js |
+| State | Zustand ^5.0.12 |
+| HTTP | Axios |
+| Tests | Vitest ^3.2.4, ESLint 9 |
+
+## Project structure
+
+```
+src/
+  app/                 # Pages: home, generate, avatars, profile, payment-*
+  actions/             # Server actions: HeyGen generate/retrieve/avatars, Stripe payments
+  components/          # Generate, Avatars, Profile, payments UI, Header/Footer
+  firebase/            # Client + Admin (soft-fail when env missing)
+  libs/                # Clerk config helpers, HeyGen response parsers
+  zustand/             # Auth, profile, payments stores
+  proxy.ts             # Clerk middleware / route protection
+firestore.rules  storage.rules  .env.example
+```
+
+## Getting started
 
 ### Prerequisites
 
-Make sure you have the following tools installed on your machine:
+- Node.js 22+
+- npm
+- Clerk application
+- Firebase project (optional but used for profile / credits persistence)
+- Stripe account
+- A HeyGen API key (entered in-app on the profile page)
 
-- [Node.js](https://nodejs.org/) (**version 20.9.0 or later**)
-- [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
-
-### Installation
-
-1. **Clone the repository**:
-
-   ```bash
-   git clone https://github.com/brown2020/heygen-api-demo.git
-   cd heygen-api-demo
-   ```
-
-2. **Install dependencies**:
-
-   ```bash
-   npm ci
-   ```
-
-   or
-
-   ```bash
-   yarn install
-   ```
-
-3. **Configure environment variables**:
-
-   Rename `.env.example` to `.env.local` and fill in the required values:
-
-   ```plaintext
-   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
-   CLERK_SECRET_KEY=your_clerk_secret_key
-
-   NEXT_PUBLIC_STRIPE_PRODUCT_NAME=your_stripe_product_name
-   NEXT_PUBLIC_STRIPE_KEY=your_stripe_key
-   STRIPE_SECRET_KEY=your_stripe_secret_key
-
-   # Firebase Client Config
-   NEXT_PUBLIC_FIREBASE_APIKEY=your_firebase_apikey
-   NEXT_PUBLIC_FIREBASE_AUTHDOMAIN=your_firebase_authdomain
-   NEXT_PUBLIC_FIREBASE_PROJECTID=your_firebase_projectid
-   NEXT_PUBLIC_FIREBASE_STORAGEBUCKET=your_firebase_storagebucket
-   NEXT_PUBLIC_FIREBASE_MESSAGINGSENDERID=your_firebase_messagingsenderid
-   NEXT_PUBLIC_FIREBASE_APPID=your_firebase_appid
-   NEXT_PUBLIC_FIREBASE_MEASUREMENTID=your_firebase_measurementid
-
-   # Firebase Server Config
-   FIREBASE_TYPE=service_account
-   FIREBASE_PROJECT_ID=your_firebase_project_id
-   FIREBASE_PRIVATE_KEY_ID=your_firebase_private_key_id
-   FIREBASE_PRIVATE_KEY=your_firebase_private_key
-   FIREBASE_CLIENT_EMAIL=your_firebase_client_email
-   FIREBASE_CLIENT_ID=your_firebase_client_id
-   FIREBASE_AUTH_URI=your_firebase_auth_uri
-   FIREBASE_TOKEN_URI=your_firebase_token_uri
-   FIREBASE_AUTH_PROVIDER_X509_CERT_URL=your_firebase_auth_provider_cert_url
-   FIREBASE_CLIENT_CERTS_URL=your_firebase_client_certs_url
-   FIREBASE_UNIVERSE_DOMAIN=your_firebase_universe_domain
-   ```
-
-### Running the Application
-
-1. **Start the development server**:
-
-   ```bash
-   npm run dev
-   ```
-
-   or
-
-   ```bash
-   yarn dev
-   ```
-
-   The application will be available at `http://localhost:3000`.
-
-2. **Build for production**:
-
-   ```bash
-   npm run build
-   ```
-
-   or
-
-   ```bash
-   yarn build
-   ```
-
-   Then start the production server:
-
-   ```bash
-   npm run start
-   ```
-
-   or
-
-   ```bash
-   yarn start
-   ```
-
-### Linting
-
-To lint the code, run:
+### Install
 
 ```bash
-npm run lint
+git clone https://github.com/brown2020/heygen-api-demo.git
+cd heygen-api-demo
+cp .env.example .env.local
+# Fill in placeholders — never commit real secrets
+npm ci
+npm run dev
 ```
 
-or
+Open [http://localhost:3000](http://localhost:3000).
 
-```bash
-yarn lint
-```
+## Environment variables
 
-This project uses **ESLint v9** with a **flat config** (`eslint.config.mjs`), which is the supported configuration format for ESLint 9+.
+| Name | Purpose | Where to get it |
+| --- | --- | --- |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key | [Clerk Dashboard](https://dashboard.clerk.com) |
+| `CLERK_SECRET_KEY` | Clerk secret key | Same |
+| `NEXT_PUBLIC_FIREBASE_*` | Client Firebase config | Firebase Console → Project settings |
+| `FIREBASE_*` | Admin service account fields | Firebase Console → Service accounts |
+| `NEXT_PUBLIC_STRIPE_KEY` | Stripe publishable key | Stripe Dashboard |
+| `STRIPE_SECRET_KEY` | Stripe secret key | Stripe Dashboard |
+| `NEXT_PUBLIC_STRIPE_PRODUCT_NAME` | Credit product label | Your choice / Stripe product |
+| `HEYGEN_USE_FIXTURES` | When `true`, HeyGen generate calls use test mode (avoid burning credits in CI/eval) | Set locally / in CI as needed |
 
-## Application Structure
+HeyGen API keys are supplied by each user on their profile, not via a shared server env var.
 
-### Middleware / Proxy
+Firebase and Clerk client init soft-skip when keys are missing so CI builds can succeed without secrets.
 
-The application uses a `proxy.ts` file (formerly middleware) to integrate with [Clerk](https://clerk.dev/docs/nextjs) for protecting specific routes. It ensures that users are authenticated before accessing protected resources.
+## Scripts
 
-### State Management
+| Script | Description |
+| --- | --- |
+| `npm run dev` | Dev server |
+| `npm run build` | Production build |
+| `npm start` | Serve production build |
+| `npm run lint` | ESLint |
+| `npm run typecheck` | `tsc --noEmit` |
+| `npm test` | Vitest (HeyGen response fixtures — no live API) |
+| `npm run validate` | lint + typecheck + test + build |
+| `npm run doctor` | React Doctor |
 
-The application uses [Zustand](https://github.com/pmndrs/zustand) to manage local state and synchronize it with Firebase. The state includes the user's profile information, such as email, display name, and API keys required for Heygen and ElevenLabs integrations.
+## Testing and CI
 
-### Server Actions
+- Unit tests cover HeyGen response parsing and auth constants with fixtures (no live HeyGen calls).
+- `.github/workflows/ci.yml` on `dev` / `main`: lint → typecheck → test → build (secret-free gate).
 
-1. **Generate Talking Photo Video**:
-   Utilizes the Heygen API to generate videos based on user-selected avatars and scripts. It supports both pre-recorded audio and text-to-speech options.
-2. **Fetch Heygen Avatars**:
-   Retrieves a list of available avatars from the Heygen API to be used for generating videos.
-3. **Retrieve Video and Save to Firebase**:
-   Polls the Heygen API to check the status of the video rendering, downloads it upon completion, uploads it to Firebase Storage, and stores the metadata in Firestore.
+## Firebase
 
-### Polling for Status Updates
-
-The application currently uses a polling mechanism to check the status of video generation:
-
-- **Polling**: Periodically sends requests to the Heygen API to check the status of video rendering until the process is complete. This approach works well for simple implementations or small-scale usage.
-- **Webhooks (Optional for Developers)**: Developers can replace polling with webhooks for more efficient real-time updates. By setting up webhooks, the Heygen API can automatically notify the application when the video generation is completed, reducing the need for continuous polling.
-
-### Pages
-
-- **Avatars Page**:
-  - Allows users to browse, edit, and fetch avatars from the Heygen API.
-  - Displays a list of avatars stored in Firebase and provides options to filter by favorites or fetch new avatars.
-  - Users can mark avatars as favorites, view details, and fetch the latest avatars directly from the API.
-
-- **Generate Page**:
-  - The primary interface for generating videos using selected avatars.
-  - Allows users to input a script and choose from different voice settings (pre-recorded audio, text-to-speech, or silence).
-  - Displays status and error messages during the video generation process, and shows the generated video upon completion.
-  - Provides access to previously generated videos for review.
-
-- **Profile Page**:
-  - Allows users to enter their API keys for Heygen and ElevenLabs, view their profile details, and manage their account settings.
-  - Displays user authentication data, including email and display name, using Clerk.
-  - Integrates a payment page for purchasing additional credits for video generation.
+Deploy `firestore.rules` and `storage.rules` if you use Firebase for profiles and media. Configure the Clerk ↔ Firebase integration if you enable the custom-token bridge in the header.
 
 ## Deployment
 
-This application can be deployed on any platform that supports Node.js, such as Vercel, Netlify, or AWS. For deployment on [Vercel](https://vercel.com/):
-
-1. Connect your GitHub repository to Vercel.
-2. Add environment variables from `.env.local` to your Vercel project settings.
-3. Deploy!
+Vercel-friendly Next.js app. Set env vars in the host dashboard. Prefer `HEYGEN_USE_FIXTURES=true` in non-production eval environments.
 
 ## Contributing
 
-Contributions are welcome! Please open an issue or submit a pull request for any changes or enhancements.
+Branch from `dev`. Do not call live HeyGen in CI. Never commit `.env.local` or inline secrets in workflows.
 
 ## License
 
-This project is licensed under the **GNU Affero General Public License v3.0** - see the [LICENSE.md](LICENSE.md) file for details.
-
-## Acknowledgments
-
-- [Clerk](https://clerk.dev/) for authentication.
-- [Stripe](https://stripe.com/) for payment processing.
-- [Heygen](https://heygen.com/) for the API demo.
-- [Firebase](https://firebase.google.com/) for storage and database management.
-- [Zustand](https://github.com/pmndrs/zustand) for state management.
-- [Tailwind CSS](https://tailwindcss.com/) for styling.
-
-## Contact
-
-For more information or questions, please contact [info@ignitechannel.com](mailto:info@ignitechannel.com).
+GNU Affero General Public License v3.0 — see [LICENSE.md](LICENSE.md).
