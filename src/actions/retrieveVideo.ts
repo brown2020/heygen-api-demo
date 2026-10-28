@@ -1,10 +1,14 @@
 "use server";
 
 import axios from "axios";
-import { adminBucket, adminDb } from "@/firebase/firebaseAdmin";
 import { auth } from "@clerk/nextjs/server";
-import { after } from "next/server";
+import { axiosErrorSummary } from "@/libs/axios-error";
 import { mapHeygenVideoStatus } from "@/libs/heygen-response";
+import { assertSafeHeygenAssetUrl, MAX_VIDEO_DOWNLOAD_BYTES } from "@/libs/safe-url";
+import { assertSafeStorageId } from "@/libs/storage-id";
+import { SIGNED_URL_TTL_MS } from "@/libs/video-poll";
+import { getAdminServices } from "@/firebase/firebaseAdmin";
+import { getUserHeygenApiKey } from "@/server/heygen-user";
 
 interface RetrieveVideoResponse {
   status: "processing" | "completed" | "failed" | "pending";
@@ -13,127 +17,117 @@ interface RetrieveVideoResponse {
   error?: string;
 }
 
+function safeThumbnail(value: string | undefined): string | null {
+  if (!value) return null;
+  try {
+    return assertSafeHeygenAssetUrl(value).toString();
+  } catch {
+    return null;
+  }
+}
+
 export async function retrieveVideo(
-  apiKey: string,
   videoId: string,
-  talkingPhotoId: string,
-  pollInterval: number = 1000
+  talkingPhotoId: string
 ): Promise<RetrieveVideoResponse | null> {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
-  const isDebug = process.env.NODE_ENV !== "production";
-  let attempts = 0;
-  while (attempts < 600) {
-    attempts++;
-    if (isDebug) {
-      const attempt = attempts;
-      after(() => {
-        console.log(`Checking video status... Attempt: ${attempt}`);
-      });
-    }
 
-    try {
-      const response = await axios.get(
-        `https://api.heygen.com/v1/video_status.get`,
-        {
-          headers: {
-            "x-api-key": apiKey,
-          },
-          params: {
-            video_id: videoId,
-          },
-        }
-      );
-
-      if (response.status === 200 && response.data.code === 100) {
-        const mapped = mapHeygenVideoStatus(response.data);
-        if (isDebug) {
-          after(() => {
-            console.log(`Current video status: ${mapped.status}`);
-          });
-        }
-
-        if (mapped.status === "completed") {
-          const videoUrlRemote = mapped.video_url;
-          if (!videoUrlRemote) {
-            return {
-              status: "failed",
-              error: "Completed video missing download URL.",
-            };
-          }
-          if (isDebug) {
-            after(() => {
-              console.log("Video completed, downloading from URL:", videoUrlRemote);
-            });
-          }
-
-          const videoResponse = await axios.get(videoUrlRemote, {
-            responseType: "arraybuffer",
-          });
-
-          const file = adminBucket.file(
-            `videos/${talkingPhotoId}/${videoId}.mp4`
-          );
-          await file.save(videoResponse.data, {
-            metadata: {
-              contentType: "video/mp4",
-            },
-          });
-          if (isDebug) {
-            after(() => {
-              console.log("Video uploaded to Firebase Storage.");
-            });
-          }
-
-          const [videoUrl] = await file.getSignedUrl({
-            action: "read",
-            expires: "01-01-2124",
-          });
-          if (isDebug) {
-            after(() => {
-              console.log("Generated signed URL with long expiration:", videoUrl);
-            });
-          }
-
-          const docRef = adminDb
-            .collection("talkingPhotos")
-            .doc(talkingPhotoId)
-            .collection("videos")
-            .doc(videoId);
-
-          await docRef.set({
-            video_url: videoUrl,
-            thumbnail_url: mapped.thumbnail_url || null,
-            created_at: new Date(),
-          });
-          if (isDebug) {
-            after(() => {
-              console.log("Video URL saved to Firestore.");
-            });
-          }
-
-          return {
-            status: "completed",
-            video_url: videoUrl,
-            thumbnail_url: mapped.thumbnail_url,
-          };
-        } else if (mapped.status === "failed") {
-          console.error("Video rendering failed:", mapped.error);
-          return {
-            status: "failed",
-            error: mapped.error || "An error occurred during video rendering.",
-          };
-        }
-      } else {
-        console.error("Error fetching video status:", response.data.message);
-      }
-    } catch (error) {
-      console.error("Error fetching video status (will retry):", error);
-    }
-
-    await new Promise((resolve) => setTimeout(resolve, pollInterval));
+  let safeVideoId: string;
+  let safePhotoId: string;
+  try {
+    safeVideoId = assertSafeStorageId(videoId, "Video id");
+    safePhotoId = assertSafeStorageId(talkingPhotoId, "Talking photo id");
+  } catch (error) {
+    return {
+      status: "failed",
+      error: error instanceof Error ? error.message : "Invalid id",
+    };
   }
 
-  console.error("Video retrieval timed out after max attempts.");
-  return null;
+  let apiKey: string;
+  let bucket;
+  let db;
+  try {
+    apiKey = await getUserHeygenApiKey(userId);
+    ({ bucket, db } = getAdminServices());
+  } catch (error) {
+    return {
+      status: "failed",
+      error: error instanceof Error ? error.message : "Server is not configured",
+    };
+  }
+
+  try {
+    const response = await axios.get("https://api.heygen.com/v1/video_status.get", {
+      headers: { "x-api-key": apiKey },
+      params: { video_id: safeVideoId },
+      timeout: 20_000,
+      maxRedirects: 0,
+    });
+
+    if (response.status !== 200 || response.data?.code !== 100) {
+      return { status: "processing" };
+    }
+
+    const mapped = mapHeygenVideoStatus(response.data);
+    if (mapped.status === "failed") {
+      return {
+        status: "failed",
+        error: mapped.error || "An error occurred during video rendering.",
+      };
+    }
+    if (mapped.status !== "completed") {
+      return { status: mapped.status === "pending" ? "pending" : "processing" };
+    }
+
+    if (!mapped.video_url) {
+      return { status: "failed", error: "Completed video missing download URL." };
+    }
+
+    const downloadUrl = assertSafeHeygenAssetUrl(mapped.video_url);
+    const videoResponse = await axios.get<ArrayBuffer>(downloadUrl.toString(), {
+      responseType: "arraybuffer",
+      maxRedirects: 0,
+      maxContentLength: MAX_VIDEO_DOWNLOAD_BYTES,
+      maxBodyLength: MAX_VIDEO_DOWNLOAD_BYTES,
+      timeout: 30_000,
+    });
+
+    const storagePath = `videos/${userId}/${safePhotoId}/${safeVideoId}.mp4`;
+    const file = bucket.file(storagePath);
+    await file.save(Buffer.from(videoResponse.data), {
+      metadata: { contentType: "video/mp4" },
+    });
+
+    const [videoUrl] = await file.getSignedUrl({
+      action: "read",
+      expires: Date.now() + SIGNED_URL_TTL_MS,
+    });
+
+    await db
+      .collection("users")
+      .doc(userId)
+      .collection("talkingPhotos")
+      .doc(safePhotoId)
+      .collection("videos")
+      .doc(safeVideoId)
+      .set({
+        storage_path: storagePath,
+        thumbnail_url: safeThumbnail(mapped.thumbnail_url),
+        created_at: new Date(),
+      });
+
+    return {
+      status: "completed",
+      video_url: videoUrl,
+      thumbnail_url: mapped.thumbnail_url,
+    };
+  } catch (error) {
+    console.error("Error fetching video status:", axiosErrorSummary(error));
+    if (error instanceof Error && /video url|maxContentLength|maxBodyLength/i.test(error.message)) {
+      return { status: "failed", error: error.message };
+    }
+    return { status: "processing" };
+  }
 }

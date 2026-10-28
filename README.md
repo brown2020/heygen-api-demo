@@ -74,6 +74,7 @@ Open [http://localhost:3000](http://localhost:3000).
 | `FIREBASE_*` | Admin service account fields | Firebase Console → Service accounts |
 | `NEXT_PUBLIC_STRIPE_KEY` | Stripe publishable key | Stripe Dashboard |
 | `STRIPE_SECRET_KEY` | Stripe secret key | Stripe Dashboard |
+| `STRIPE_WEBHOOK_SECRET` | Optional Stripe webhook signing secret. If unset, `POST /api/stripe/webhook` returns 503 and does not grant credits. Checkout success still grants credits for the signed-in user. | Stripe Dashboard → Webhooks |
 | `NEXT_PUBLIC_STRIPE_PRODUCT_NAME` | Credit product label | Your choice / Stripe product |
 | `HEYGEN_USE_FIXTURES` | When `true`, HeyGen generate calls use test mode (avoid burning credits in CI/eval) | Set locally / in CI as needed |
 
@@ -101,11 +102,18 @@ Firebase and Clerk client init soft-skip when keys are missing so CI builds can 
 
 ## Firebase
 
-Deploy `firestore.rules` and `storage.rules` if you use Firebase for profiles and media. Configure the Clerk ↔ Firebase integration if you enable the custom-token bridge in the header.
+Deploy these files in the Firebase console or CLI (this repo does not deploy them):
+
+- `firestore.rules` — owner-scoped profiles, talking photos, and videos. Clients cannot write `credits`, payment documents, or video documents.
+- `storage.rules` — owner read of `videos/{userId}/**`; writes are admin-only.
+
+No composite Firestore indexes are required. Credit packs and video playback are granted with the Admin SDK. Configure the Clerk ↔ Firebase integration so the custom-token uid matches the Clerk user id.
+
+Point a Stripe webhook at `POST /api/stripe/webhook` for `payment_intent.succeeded`, and set `STRIPE_WEBHOOK_SECRET`. Until that secret is set, the route stays disabled and the success page performs the same idempotent grant.
 
 ## Deployment
 
-Vercel-friendly Next.js app. Set env vars in the host dashboard. Prefer `HEYGEN_USE_FIXTURES=true` in non-production eval environments.
+Vercel-friendly Next.js app. Set env vars in the host dashboard. Prefer `HEYGEN_USE_FIXTURES=true` in non-production eval environments. In production, protected routes stay closed unless Clerk is configured.
 
 ## Contributing
 

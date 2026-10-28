@@ -1,15 +1,8 @@
 import { create } from "zustand";
-import {
-  collection,
-  addDoc,
-  query,
-  where,
-  getDocs,
-  Timestamp,
-} from "firebase/firestore";
+import { collection, getDocs, Timestamp } from "firebase/firestore";
 import { useAuthStore } from "./useAuthStore";
-import toast from "react-hot-toast";
 import { db, isFirebaseConfigured } from "@/firebase/firebaseClient";
+import { paymentRecordId } from "@/libs/payments";
 
 export type PaymentType = {
   id: string;
@@ -23,8 +16,6 @@ interface PaymentsStoreState {
   paymentsLoading: boolean;
   paymentsError: string | null;
   fetchPayments: () => Promise<void>;
-  addPayment: (payment: Omit<PaymentType, "createdAt">) => Promise<void>;
-  checkIfPaymentProcessed: (paymentId: string) => Promise<PaymentType | null>;
 }
 
 export const usePaymentsStore = create<PaymentsStoreState>((set) => ({
@@ -40,14 +31,17 @@ export const usePaymentsStore = create<PaymentsStoreState>((set) => ({
     set({ paymentsLoading: true });
 
     try {
-      const q = query(collection(db, "users", uid, "payments"));
-      const querySnapshot = await getDocs(q);
-      const payments = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        amount: doc.data().amount,
-        createdAt: doc.data().createdAt ?? null,
-        status: doc.data().status,
-      }));
+      const querySnapshot = await getDocs(collection(db, "users", uid, "payments"));
+      const payments = querySnapshot.docs.map((paymentDoc) => {
+        const data = paymentDoc.data();
+        const stripeId = paymentRecordId(data.id, paymentDoc.id);
+        return {
+          id: stripeId,
+          amount: data.amount,
+          createdAt: data.createdAt ?? null,
+          status: data.status,
+        };
+      });
 
       // Sort payments by createdAt with newest at the top
       payments.sort(
@@ -61,85 +55,5 @@ export const usePaymentsStore = create<PaymentsStoreState>((set) => ({
         error instanceof Error ? error.message : "An unknown error occurred";
       set({ paymentsError: errorMessage, paymentsLoading: false });
     }
-  },
-
-  addPayment: async (payment) => {
-    const uid = useAuthStore.getState().uid;
-    if (!uid) return;
-    if (!isFirebaseConfigured) return;
-
-    set({ paymentsLoading: true });
-
-    try {
-      const createdAt = Timestamp.now();
-
-      // Query to check if the payment with the same id already exists
-      const q = query(
-        collection(db, "users", uid, "payments"),
-        where("id", "==", payment.id)
-      );
-      const querySnapshot = await getDocs(q);
-
-      if (!querySnapshot.empty) {
-        toast.error("Payment with this ID already exists.");
-        set({ paymentsLoading: false });
-        return;
-      }
-
-      const newPaymentDoc = await addDoc(
-        collection(db, "users", uid, "payments"),
-        {
-          id: payment.id,
-          amount: payment.amount,
-          createdAt,
-          status: payment.status,
-        }
-      );
-
-      const newPayment = {
-        id: newPaymentDoc.id,
-        amount: payment.amount,
-        createdAt,
-        status: payment.status,
-      };
-
-      set((state) => {
-        const updatedPayments = [...state.payments, newPayment];
-
-        // Sort payments by createdAt with newest at the top
-        updatedPayments.sort(
-          (a, b) =>
-            (b.createdAt?.toMillis() ?? 0) - (a.createdAt?.toMillis() ?? 0)
-        );
-
-        return { payments: updatedPayments, paymentsLoading: false };
-      });
-
-      toast.success("Payment added successfully.");
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : "An unknown error occurred";
-      set({ paymentsError: errorMessage, paymentsLoading: false });
-    }
-  },
-
-  checkIfPaymentProcessed: async (paymentId) => {
-    const uid = useAuthStore.getState().uid;
-    if (!uid) return null;
-    if (!isFirebaseConfigured) return null;
-
-    const paymentsRef = collection(db, "users", uid, "payments");
-    const q = query(
-      paymentsRef,
-      where("id", "==", paymentId),
-      where("status", "==", "succeeded")
-    );
-    const querySnapshot = await getDocs(q);
-
-    if (!querySnapshot.empty) {
-      return querySnapshot.docs[0].data() as PaymentType;
-    }
-
-    return null;
   },
 }));

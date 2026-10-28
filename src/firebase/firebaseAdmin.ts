@@ -1,4 +1,4 @@
-import { initializeApp, getApps, cert, type ServiceAccount } from "firebase-admin/app";
+import { initializeApp, getApps, cert } from "firebase-admin/app";
 import { getStorage } from "firebase-admin/storage";
 import { getFirestore, type Firestore } from "firebase-admin/firestore";
 import { getAuth, type Auth } from "firebase-admin/auth";
@@ -19,25 +19,42 @@ const adminCredentials = {
   clientCertsUrl: process.env.FIREBASE_CLIENT_CERTS_URL,
 };
 
-let adminBucket: Bucket;
-let adminDb: Firestore;
-let adminAuth: Auth;
+let adminBucket: Bucket | null = null;
+let adminDb: Firestore | null = null;
+let adminAuth: Auth | null = null;
+let adminInitAttempted = false;
+let adminInitError: Error | null = null;
 
-try {
-  if (!getApps().length) {
-    initializeApp({
-      credential: cert(adminCredentials as ServiceAccount),
-      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGEBUCKET,
-    });
+function initAdmin(): void {
+  if (adminInitAttempted) return;
+  adminInitAttempted = true;
+  const projectId = adminCredentials.projectId;
+  const clientEmail = adminCredentials.clientEmail;
+  const privateKey = adminCredentials.privateKey;
+  if (!projectId || !clientEmail || !privateKey) {
+    adminInitError = new Error("Firebase Admin is not configured");
+    return;
   }
-  adminBucket = getStorage().bucket();
-  adminDb = getFirestore();
-  adminAuth = getAuth();
-} catch (e) {
-  console.warn("Firebase Admin initialization failed (expected in build):", e);
-  adminBucket = {} as Bucket;
-  adminDb = {} as Firestore;
-  adminAuth = {} as Auth;
+  try {
+    if (!getApps().length) {
+      initializeApp({
+        credential: cert({ projectId, clientEmail, privateKey }),
+        storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGEBUCKET,
+      });
+    }
+    adminBucket = getStorage().bucket();
+    adminDb = getFirestore();
+    adminAuth = getAuth();
+  } catch (e) {
+    adminInitError = e instanceof Error ? e : new Error("Firebase Admin initialization failed");
+    console.warn("Firebase Admin initialization failed (expected in build):", adminInitError.message);
+  }
 }
 
-export { adminBucket, adminDb, adminAuth };
+export function getAdminServices(): { bucket: Bucket; db: Firestore; auth: Auth } {
+  initAdmin();
+  if (!adminBucket || !adminDb || !adminAuth) {
+    throw adminInitError ?? new Error("Firebase Admin is not configured");
+  }
+  return { bucket: adminBucket, db: adminDb, auth: adminAuth };
+}

@@ -1,13 +1,10 @@
 "use client";
 
-import { useAuthStore } from "@/zustand/useAuthStore";
-import { usePaymentsStore } from "@/zustand/usePaymentsStore";
-import useProfileStore from "@/zustand/useProfileStore";
-import { creditsForPaymentAmountCents } from "@/libs/heygen-response";
+import { finalizePayment } from "@/actions/paymentActions";
 import { formatUtcDateTime } from "@/libs/format";
+import { useAuthStore } from "@/zustand/useAuthStore";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { validatePaymentIntent } from "@/actions/paymentActions";
 
 type Props = {
   payment_intent: string;
@@ -16,19 +13,12 @@ type Props = {
 export default function PaymentSuccessPage({ payment_intent }: Props) {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
-
   const [created, setCreated] = useState(0);
   const [id, setId] = useState("");
   const [amount, setAmount] = useState(0);
   const [status, setStatus] = useState("");
-
-  const addPayment = usePaymentsStore((state) => state.addPayment);
-  const checkIfPaymentProcessed = usePaymentsStore(
-    (state) => state.checkIfPaymentProcessed
-  );
-  const addCredits = useProfileStore((state) => state.addCredits);
-
   const uid = useAuthStore((state) => state.uid);
+  const authError = useAuthStore((state) => state.authError);
 
   useEffect(() => {
     let cancelled = false;
@@ -45,65 +35,35 @@ export default function PaymentSuccessPage({ payment_intent }: Props) {
       };
     }
 
-    if (!uid) {
-      return () => {
-        cancelled = true;
-      };
-    }
-
     (async () => {
       try {
-        const data = await validatePaymentIntent(payment_intent);
+        const data = await finalizePayment(payment_intent);
         if (cancelled) return;
-
-        if (data.status === "succeeded") {
-          const existingPayment = await checkIfPaymentProcessed(data.id);
+        queueMicrotask(() => {
           if (cancelled) return;
-
-          if (existingPayment) {
-            queueMicrotask(() => {
-              if (cancelled) return;
-              setMessage("Payment has already been processed.");
-              setCreated(existingPayment.createdAt?.toMillis?.() ?? 0);
-              setId(existingPayment.id);
-              setAmount(existingPayment.amount);
-              setStatus(existingPayment.status);
-              setLoading(false);
-            });
-            return;
-          }
-
-          queueMicrotask(() => {
-            if (cancelled) return;
-            setMessage("Payment successful");
-            setCreated(data.created * 1000);
-            setId(data.id);
-            setAmount(data.amount);
-            setStatus(data.status);
-          });
-
-          await addPayment({
-            id: data.id,
-            amount: data.amount,
-            status: data.status,
-          });
-          if (cancelled) return;
-
-          await addCredits(creditsForPaymentAmountCents(data.amount));
-        } else {
-          console.error("Payment validation failed:", data.status);
-          if (!cancelled) {
-            queueMicrotask(() => setMessage("Payment validation failed"));
-          }
-        }
+          setMessage(
+            data.alreadyProcessed
+              ? "Payment has already been processed."
+              : "Payment successful"
+          );
+          setCreated(data.created * 1000);
+          setId(data.id);
+          setAmount(data.amount);
+          setStatus(data.status);
+          setLoading(false);
+        });
       } catch (error) {
-        console.error("Error handling payment success:", error);
+        console.error(
+          "Error handling payment success:",
+          error instanceof Error ? error.message : "unknown"
+        );
         if (!cancelled) {
-          queueMicrotask(() => setMessage("Error handling payment success"));
-        }
-      } finally {
-        if (!cancelled) {
-          queueMicrotask(() => setLoading(false));
+          queueMicrotask(() => {
+            setMessage(
+              error instanceof Error ? error.message : "Error handling payment success"
+            );
+            setLoading(false);
+          });
         }
       }
     })();
@@ -111,7 +71,7 @@ export default function PaymentSuccessPage({ payment_intent }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [payment_intent, addPayment, checkIfPaymentProcessed, addCredits, uid]);
+  }, [payment_intent]);
 
   return (
     <main className="max-w-6xl flex flex-col gap-2.5 mx-auto p-10 text-black text-center border m-10 rounded-md border-black">
@@ -124,11 +84,16 @@ export default function PaymentSuccessPage({ payment_intent }: Props) {
           <div className="bg-white p-2 rounded-md my-5 text-4xl font-bold mx-auto">
             ${amount / 100}
           </div>
-          <div>Uid: {uid}</div>
+          {uid && <div>Uid: {uid}</div>}
           <div>Id: {id}</div>
           <div>Created: {formatUtcDateTime(created)}</div>
           <div>Status: {status}</div>
           {message && <div className="sr-only">{message}</div>}
+          {authError && (
+            <p className="text-amber-800 mt-4" role="status">
+              {authError}
+            </p>
+          )}
         </div>
       ) : (
         <div role="alert">{message}</div>

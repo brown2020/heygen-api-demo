@@ -8,6 +8,8 @@ import { TalkingPhoto } from "@/types/heygen";
 import { ClipLoader } from "react-spinners";
 import { db, isFirebaseConfigured } from "@/firebase/firebaseClient";
 import { collection, onSnapshot, setDoc, doc } from "firebase/firestore";
+import { useAuthStore } from "@/zustand/useAuthStore";
+import { assertSafeStorageId } from "@/libs/storage-id";
 
 export default function Avatars() {
   const [talkingPhotos, setTalkingPhotos] = useState<TalkingPhoto[]>([]);
@@ -15,10 +17,11 @@ export default function Avatars() {
   const [error, setError] = useState<string | null>(null);
   const [showFavorites, setShowFavorites] = useState(false);
   const profile = useProfileStore((state) => state.profile);
+  const uid = useAuthStore((state) => state.uid);
 
   useEffect(() => {
-    if (!isFirebaseConfigured) return;
-    const talkingPhotosCollection = collection(db, "talkingPhotos");
+    if (!isFirebaseConfigured || !uid) return;
+    const talkingPhotosCollection = collection(db, "users", uid, "talkingPhotos");
     const unsubscribeTalkingPhotos = onSnapshot(
       talkingPhotosCollection,
       (snapshot) => {
@@ -26,13 +29,16 @@ export default function Avatars() {
           (d) => d.data() as TalkingPhoto
         );
         setTalkingPhotos(talkingPhotosList);
+      },
+      () => {
+        setError("Could not load talking photos.");
       }
     );
 
     return () => {
       unsubscribeTalkingPhotos();
     };
-  }, []);
+  }, [uid]);
 
   const fetchTalkingPhotos = async () => {
     setIsLoading(true);
@@ -40,7 +46,12 @@ export default function Avatars() {
 
     try {
       if (!profile.heygen_api_key) {
-        setError("API key is missing");
+        setError("API key is missing. Save it on your profile first.");
+        return;
+      }
+
+      if (!uid) {
+        setError("Sign in before fetching talking photos.");
         return;
       }
 
@@ -49,15 +60,25 @@ export default function Avatars() {
         return;
       }
 
-      const result = await getHeygenAvatars(profile.heygen_api_key);
+      const result = await getHeygenAvatars();
       if (result && result.data) {
         const photos = result.data.talking_photos;
-        const talkingPhotosCollection = collection(db, "talkingPhotos");
+        const talkingPhotosCollection = collection(db, "users", uid, "talkingPhotos");
 
         await Promise.all(
           photos.map((photo) => {
+            try {
+              assertSafeStorageId(photo.talking_photo_id, "Talking photo id");
+            } catch {
+              return Promise.resolve();
+            }
+            const preview = photo.preview_image_url;
+            const payload =
+              typeof preview === "string" && preview.startsWith("https://")
+                ? photo
+                : { ...photo, preview_image_url: "" };
             const docRef = doc(talkingPhotosCollection, photo.talking_photo_id);
-            return setDoc(docRef, photo, { merge: true });
+            return setDoc(docRef, payload, { merge: true }).catch(() => undefined);
           })
         );
       } else {

@@ -1,8 +1,10 @@
 "use server";
 
 import type { HeygenAvatarResponse, TalkingPhoto } from "@/types/heygen";
+import { axiosErrorSummary } from "@/libs/axios-error";
 import { extractTalkingPhotos } from "@/libs/heygen-response";
 import { auth } from "@clerk/nextjs/server";
+import { getUserHeygenApiKey } from "@/server/heygen-user";
 import axios from "axios";
 
 async function fetchTalkingPhotos(headers: Record<string, string>) {
@@ -17,6 +19,8 @@ async function fetchTalkingPhotos(headers: Record<string, string>) {
   for (const url of candidateUrls) {
     const res = await axios.get(url, {
       headers,
+      timeout: 20_000,
+      maxRedirects: 0,
       validateStatus: (status) =>
         (status >= 200 && status < 300) || status === 404,
     });
@@ -27,11 +31,16 @@ async function fetchTalkingPhotos(headers: Record<string, string>) {
   return [] as TalkingPhoto[];
 }
 
-export async function getHeygenAvatars(
-  apiKey: string
-): Promise<HeygenAvatarResponse | null> {
+export async function getHeygenAvatars(): Promise<HeygenAvatarResponse | null> {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
+  let apiKey: string;
+  try {
+    apiKey = await getUserHeygenApiKey(userId);
+  } catch (error) {
+    console.error("HeyGen API key lookup failed:", axiosErrorSummary(error));
+    return null;
+  }
   try {
     const headers = {
       "x-api-key": apiKey,
@@ -39,7 +48,11 @@ export async function getHeygenAvatars(
     };
 
     const [avatarsRes, talkingPhotos] = await Promise.all([
-      axios.get("https://api.heygen.com/v2/avatars", { headers }),
+      axios.get("https://api.heygen.com/v2/avatars", {
+        headers,
+        timeout: 20_000,
+        maxRedirects: 0,
+      }),
       fetchTalkingPhotos(headers),
     ]);
 
@@ -63,7 +76,7 @@ export async function getHeygenAvatars(
       },
     };
   } catch (error) {
-    console.error("Error fetching Heygen avatars:", error);
+    console.error("Error fetching Heygen avatars:", axiosErrorSummary(error));
     return null;
   }
 }

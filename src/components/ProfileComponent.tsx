@@ -65,8 +65,9 @@ export default function ProfileComponent() {
           HeyGen API Key:
         </label>
         <input
-          type="text"
+          type="password"
           id="heygen-api-key"
+          autoComplete="off"
           value={heygenApiKey}
           onChange={(e) =>
             setDraft((prev) => ({ ...prev, heygenApiKey: e.target.value }))
@@ -78,8 +79,9 @@ export default function ProfileComponent() {
           ElevenLabs API Key:
         </label>
         <input
-          type="text"
+          type="password"
           id="elevenlabs-api-key"
+          autoComplete="off"
           value={elevenlabsApiKey}
           onChange={(e) =>
             setDraft((prev) => ({ ...prev, elevenlabsApiKey: e.target.value }))

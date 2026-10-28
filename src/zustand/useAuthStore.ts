@@ -1,4 +1,5 @@
 import { db } from "@/firebase/firebaseClient";
+import { stripPrivilegedFields } from "@/libs/privileged-fields";
 import { Timestamp, doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { create } from "zustand";
 
@@ -17,6 +18,7 @@ interface AuthState {
   lastSignIn: Timestamp | null;
   premium: boolean;
   credits: number;
+  authError: string | null;
 }
 
 interface AuthActions {
@@ -41,6 +43,7 @@ const defaultAuthState: AuthState = {
   lastSignIn: null,
   premium: false,
   credits: 0,
+  authError: null,
 };
 
 export const useAuthStore = create<AuthStore>((set, get) => ({
@@ -50,16 +53,11 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     set((state) => ({ ...state, ...details }));
 
     const storeState = get();
-    const filteredState: Partial<AuthState> = {};
-    const setIfPresent = <K extends keyof AuthState>(key: K) => {
-      const value = storeState[key];
-      if (value !== undefined && value !== null) filteredState[key] = value;
-    };
+    const persisted: Record<string, unknown> = {};
     for (const key of Object.keys(defaultAuthState) as (keyof AuthState)[]) {
-      setIfPresent(key);
+      persisted[key] = storeState[key];
     }
-
-    await updateUserDetailsInFirestore(filteredState, storeState.uid);
+    await updateUserDetailsInFirestore(stripPrivilegedFields(persisted), storeState.uid);
   },
 
   clearAuthDetails: () => set({ ...defaultAuthState }),
@@ -74,7 +72,7 @@ async function updateUserDetailsInFirestore(
     try {
       await setDoc(
         userRef,
-        { ...details, lastSignIn: serverTimestamp() },
+        { ...stripPrivilegedFields(details as Record<string, unknown>), lastSignIn: serverTimestamp() },
         { merge: true }
       );
     } catch (error) {

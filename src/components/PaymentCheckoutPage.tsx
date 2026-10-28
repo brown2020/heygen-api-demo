@@ -8,7 +8,6 @@ import {
 
 import { useEffect, useState } from "react";
 import { createPaymentIntent } from "@/actions/paymentActions";
-import convertToSubcurrency from "@/utils/convertToSubcurrency";
 import { ClipLoader } from "react-spinners";
 
 type Props = { amount: number };
@@ -22,7 +21,7 @@ export default function PaymentCheckoutPage({ amount }: Props) {
 
   useEffect(() => {
     let cancelled = false;
-    createPaymentIntent(convertToSubcurrency(amount))
+    createPaymentIntent()
       .then((secret) => {
         if (!cancelled && secret) {
           queueMicrotask(() => setClientSecret(secret));
@@ -38,7 +37,7 @@ export default function PaymentCheckoutPage({ amount }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [amount]);
+  }, []);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();

@@ -1,45 +1,57 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper function to check if user is authenticated
     function isAuthenticated() {
       return request.auth != null;
     }
 
-    // Helper function to check if user is accessing their own data
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    // User profiles and user-specific data
-    match /users/{userId} {
-      allow read, write: if isOwner(userId);
-
-      // User subcollections (e.g. payments)
-      match /payments/{paymentId} {
-        allow read, write: if isOwner(userId);
-      }
-      
-      // User profile data
-      match /profile/{document=**} {
-        allow read, write: if isOwner(userId);
-      }
+    function previewUrlOk(data) {
+      return !data.keys().hasAny(['preview_image_url'])
+        || data.preview_image_url == ''
+        || (data.preview_image_url is string
+            && data.preview_image_url.matches('^https://[^\\s]+$'));
     }
 
-    // Talking Photos (Avatars)
-    // Note: The current application logic writes these to the root collection.
-    // Since the app fetches avatars using the user's API key, we allow authenticated users
-    // to sync and read these.
-    match /talkingPhotos/{photoId} {
-      allow read, write: if isAuthenticated();
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId)
+        && !request.resource.data.keys().hasAny(['isAdmin', 'premium', 'credits']);
+      allow update: if isOwner(userId)
+        && !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['isAdmin', 'premium', 'credits']);
+      allow delete: if false;
 
-      // Videos subcollection
-      match /videos/{videoId} {
-        allow read: if isAuthenticated();
-        // Writes are handled by server-side admin SDK
-        allow write: if false; 
+      match /payments/{paymentId} {
+        allow read: if isOwner(userId);
+        allow write: if false;
+      }
+
+      match /profile/{profileId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId)
+          && request.resource.data.credits == 1000
+          && !request.resource.data.keys().hasAny(['isAdmin', 'premium']);
+        allow update: if isOwner(userId)
+          && request.resource.data.credits == resource.data.credits
+          && !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['isAdmin', 'premium']);
+        allow delete: if false;
+      }
+
+      match /talkingPhotos/{photoId} {
+        allow read: if isOwner(userId);
+        allow create, update: if isOwner(userId) && previewUrlOk(request.resource.data);
+        allow delete: if isOwner(userId);
+
+        match /videos/{videoId} {
+          allow read: if isOwner(userId);
+          allow write: if false;
+        }
       }
     }
   }
 }
-

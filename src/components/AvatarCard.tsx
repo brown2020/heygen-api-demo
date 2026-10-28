@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db, isFirebaseConfigured } from "@/firebase/firebaseClient";
+import { useAuthStore } from "@/zustand/useAuthStore";
 import { HeartIcon } from "lucide-react";
 import useProfileStore from "@/zustand/useProfileStore";
 import { TalkingPhoto } from "@/types/heygen";
@@ -40,6 +41,7 @@ export default function AvatarCard({ id, talkingPhoto }: AvatarCardProps) {
 
   const { selectedTalkingPhoto } = useProfileStore((state) => state.profile);
   const updateProfile = useProfileStore((state) => state.updateProfile);
+  const uid = useAuthStore((state) => state.uid);
   const isSelected = selectedTalkingPhoto === id;
 
   const router = useRouter();
@@ -50,7 +52,8 @@ export default function AvatarCard({ id, talkingPhoto }: AvatarCardProps) {
     if (talkingPhoto || !isFirebaseConfigured) return;
     let cancelled = false;
 
-    getDoc(doc(db, "talkingPhotos", id))
+    if (!uid) return;
+    getDoc(doc(db, "users", uid, "talkingPhotos", id))
       .then((docSnap) => {
         if (cancelled || !docSnap.exists()) return;
         queueMicrotask(() => {
@@ -66,7 +69,7 @@ export default function AvatarCard({ id, talkingPhoto }: AvatarCardProps) {
     return () => {
       cancelled = true;
     };
-  }, [id, talkingPhoto]);
+  }, [id, talkingPhoto, uid]);
 
   const source = talkingPhoto ?? fetchedTalkingPhoto;
   const favorite = favoriteOverride ?? source?.favorite ?? false;
@@ -80,7 +83,8 @@ export default function AvatarCard({ id, talkingPhoto }: AvatarCardProps) {
     if (!isFirebaseConfigured) return;
     const next = !favorite;
     setFavoriteOverride(next);
-    await setDoc(doc(db, "talkingPhotos", id), { favorite: next }, { merge: true });
+    if (!uid) return;
+    await setDoc(doc(db, "users", uid, "talkingPhotos", id), { favorite: next }, { merge: true });
   };
 
   const updateDraftField =
@@ -92,8 +96,9 @@ export default function AvatarCard({ id, talkingPhoto }: AvatarCardProps) {
 
   const saveDetails = async () => {
     if (!isFirebaseConfigured) return;
+    if (!uid) return;
     await setDoc(
-      doc(db, "talkingPhotos", id),
+      doc(db, "users", uid, "talkingPhotos", id),
       {
         talking_photo_name: displayed.talkingPhotoName,
         project: displayed.project,

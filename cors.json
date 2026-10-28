@@ -1,6 +1,9 @@
 [
   {
-    "origin": ["*"],
+    "origin": [
+      "http://localhost:3000",
+      "https://heygen-api-demo.vercel.app"
+    ],
     "method": ["GET"],
     "maxAgeSeconds": 3600
   }

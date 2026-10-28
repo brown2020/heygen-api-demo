@@ -12,3 +12,16 @@ export function isProtectedPath(pathname: string): boolean {
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
   );
 }
+
+export type ProxyDecision = "clerk" | "allow" | "deny";
+
+/** Production without Clerk denies protected routes. Development stays open for local/CI UI. */
+export function decideProxyAccess(input: {
+  clerkConfigured: boolean;
+  isProduction: boolean;
+  pathname: string;
+}): ProxyDecision {
+  if (input.clerkConfigured) return "clerk";
+  if (input.isProduction && isProtectedPath(input.pathname)) return "deny";
+  return "allow";
+}

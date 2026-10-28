@@ -2,6 +2,8 @@ import { create } from "zustand";
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { useAuthStore } from "./useAuthStore";
 import { db, isFirebaseConfigured } from "@/firebase/firebaseClient";
+import { normalizeStoredCredits, STARTER_CREDITS } from "@/libs/billing";
+import { clientProfileWritePayload } from "@/libs/profile-fields";
 
 export interface ProfileType {
   email: string;
@@ -40,8 +42,6 @@ interface ProfileState {
   profile: ProfileType;
   fetchProfile: () => void;
   updateProfile: (newProfile: Partial<ProfileType>) => Promise<void>;
-  useCredits: (amount: number) => Promise<boolean>;
-  addCredits: (amount: number) => Promise<void>;
 }
 
 const mergeProfileWithDefaults = (
@@ -50,7 +50,7 @@ const mergeProfileWithDefaults = (
 ): ProfileType => ({
   ...defaultProfile,
   ...profile,
-  credits: profile.credits && profile.credits >= 100 ? profile.credits : 1000,
+  credits: normalizeStoredCredits(profile.credits),
   email: authState.authEmail || profile.email || "",
   contactEmail: profile.contactEmail || authState.authEmail || "",
   displayName: profile.displayName || authState.authDisplayName || "",
@@ -79,6 +79,7 @@ const useProfileStore = create<ProfileState>((set, get) => ({
           authPhotoUrl,
           authEmailVerified,
         });
+        await setDoc(userRef, clientProfileWritePayload(newProfile), { merge: true });
       } else {
         newProfile = {
           email: authEmail || "",
@@ -86,15 +87,17 @@ const useProfileStore = create<ProfileState>((set, get) => ({
           displayName: authDisplayName || "",
           photoUrl: authPhotoUrl || "",
           emailVerified: authEmailVerified || false,
-          credits: 1000,
+          credits: STARTER_CREDITS,
           heygen_api_key: "",
           elevenlabs_api_key: "",
           selectedAvatar: "",
           selectedTalkingPhoto: "",
         };
+        await setDoc(userRef, {
+          ...clientProfileWritePayload(newProfile),
+          credits: STARTER_CREDITS,
+        });
       }
-
-      await setDoc(userRef, newProfile);
       set({ profile: newProfile });
     } catch (error) {
       console.error("Error fetching or creating profile:", error);
@@ -106,56 +109,15 @@ const useProfileStore = create<ProfileState>((set, get) => ({
     if (!uid) return;
     if (!isFirebaseConfigured) return;
 
+    const payload = clientProfileWritePayload(newProfile);
+    if (Object.keys(payload).length === 0) return;
+
     try {
       const userRef = doc(db, `users/${uid}/profile/userData`);
-      const updatedProfile = { ...get().profile, ...newProfile };
-
-      set({ profile: updatedProfile });
-      await updateDoc(userRef, updatedProfile);
+      set({ profile: { ...get().profile, ...payload } });
+      await updateDoc(userRef, payload);
     } catch (error) {
       console.error("Error updating profile:", error);
-    }
-  },
-
-  useCredits: async (amount: number) => {
-    const uid = useAuthStore.getState().uid;
-    if (!uid) return false;
-    if (!isFirebaseConfigured) return false;
-
-    const profile = get().profile;
-    if (profile.credits < amount) {
-      return false;
-    }
-
-    try {
-      const newCredits = profile.credits - amount;
-      const userRef = doc(db, `users/${uid}/profile/userData`);
-
-      await updateDoc(userRef, { credits: newCredits });
-      set({ profile: { ...profile, credits: newCredits } });
-
-      return true;
-    } catch (error) {
-      console.error("Error using credits:", error);
-      return false;
-    }
-  },
-
-  addCredits: async (amount: number) => {
-    const uid = useAuthStore.getState().uid;
-    if (!uid) return;
-    if (!isFirebaseConfigured) return;
-
-    const profile = get().profile;
-    const newCredits = profile.credits + amount;
-
-    try {
-      const userRef = doc(db, `users/${uid}/profile/userData`);
-
-      await updateDoc(userRef, { credits: newCredits });
-      set({ profile: { ...profile, credits: newCredits } });
-    } catch (error) {
-      console.error("Error adding credits:", error);
     }
   },
 }));

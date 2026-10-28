@@ -7,6 +7,8 @@ import { db, isFirebaseConfigured } from "@/firebase/firebaseClient";
 import useProfileStore from "@/zustand/useProfileStore";
 import { generateTalkingPhotoVideo } from "@/actions/generateTalkingPhotoVideo";
 import { retrieveVideo } from "@/actions/retrieveVideo";
+import { useAuthStore } from "@/zustand/useAuthStore";
+import { isWithinPollDeadline, VIDEO_POLL_INTERVAL_MS } from "@/libs/video-poll";
 import AvatarCard from "@/components/AvatarCard";
 import { PulseLoader } from "react-spinners";
 import PreviousVideos from "@/components/PreviousVideos";
@@ -17,6 +19,7 @@ import { TalkingPhoto } from "@/types/heygen";
 
 export default function Generate() {
   const profile = useProfileStore((state) => state.profile);
+  const uid = useAuthStore((state) => state.uid);
   const [itemDetails, setItemDetails] = useState<TalkingPhoto | null>(null);
   const [loading, setLoading] = useState(true);
   const [missingSelection, setMissingSelection] = useState(false);
@@ -54,7 +57,19 @@ export default function Generate() {
       };
     }
 
-    getDoc(doc(db, "talkingPhotos", selectedId))
+    if (!uid) {
+      queueMicrotask(() => {
+        if (!cancelled) {
+          setError("Sign in before generating a video.");
+          setLoading(false);
+        }
+      });
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    getDoc(doc(db, "users", uid, "talkingPhotos", selectedId))
       .then((docSnap) => {
         if (cancelled) return;
         if (docSnap.exists()) {
@@ -89,7 +104,7 @@ export default function Generate() {
     return () => {
       cancelled = true;
     };
-  }, [profile.selectedTalkingPhoto]);
+  }, [profile.selectedTalkingPhoto, uid]);
 
   const handleGenerate = async () => {
     if (!profile.selectedTalkingPhoto) {
@@ -104,24 +119,37 @@ export default function Generate() {
 
     try {
       const result = await generateTalkingPhotoVideo(
-        profile.heygen_api_key || "",
-        profile.selectedTalkingPhoto || "noTalkingPhotoId",
+        profile.selectedTalkingPhoto,
         voiceId,
         script || undefined,
         audioUrl || undefined
       );
 
       if (result && result.video_id) {
-        const statusResponse = await retrieveVideo(
-          profile.heygen_api_key || "",
+        const started = Date.now();
+        let statusResponse = await retrieveVideo(
           result.video_id,
-          profile.selectedTalkingPhoto || "noTalkingPhotoId"
+          profile.selectedTalkingPhoto
         );
+        while (
+          statusResponse &&
+          statusResponse.status !== "completed" &&
+          statusResponse.status !== "failed" &&
+          isWithinPollDeadline(Date.now() - started)
+        ) {
+          await new Promise((resolve) => setTimeout(resolve, VIDEO_POLL_INTERVAL_MS));
+          statusResponse = await retrieveVideo(
+            result.video_id,
+            profile.selectedTalkingPhoto
+          );
+        }
 
         if (statusResponse && statusResponse.status === "completed") {
           setVideoUrl(statusResponse.video_url ?? null);
         } else if (statusResponse && statusResponse.status === "failed") {
           setError(statusResponse.error || "Video generation failed.");
+        } else {
+          setError("Video is still processing. Open this page again in a few minutes.");
         }
       } else {
         setError(result?.error || "Failed to generate video.");
@@ -216,7 +244,10 @@ export default function Generate() {
         </div>
       )}
 
-      <PreviousVideos talkingPhotoId={profile.selectedTalkingPhoto} />
+      <PreviousVideos
+        talkingPhotoId={profile.selectedTalkingPhoto}
+        refreshToken={videoUrl}
+      />
     </div>
   );
 }

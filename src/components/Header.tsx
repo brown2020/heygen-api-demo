@@ -58,6 +58,7 @@ function HeaderWithClerk() {
                 authDisplayName: user.fullName || "",
                 authPhotoUrl: user.imageUrl,
                 authReady: true,
+                authError: null,
                 lastSignIn: serverTimestamp() as Timestamp,
               })
             );
@@ -83,6 +84,7 @@ function HeaderWithClerk() {
                 authDisplayName: user.fullName || "",
                 authPhotoUrl: user.imageUrl,
                 authReady: true,
+                authError: null,
                 lastSignIn: serverTimestamp() as Timestamp,
               })
             );
@@ -90,7 +92,18 @@ function HeaderWithClerk() {
         } catch (error) {
           console.error("Error signing in with custom token:", error);
           if (!cancelled) {
-            queueMicrotask(() => clearAuthDetails());
+            queueMicrotask(() =>
+              setAuthDetails({
+                uid: user.id,
+                firebaseUid: "",
+                authEmail: user.emailAddresses[0]?.emailAddress || "",
+                authDisplayName: user.fullName || "",
+                authPhotoUrl: user.imageUrl,
+                authReady: true,
+                authError: "Firebase sign-in failed. Profile data may be unavailable.",
+                lastSignIn: serverTimestamp() as Timestamp,
+              })
+            );
           }
         }
       } else {

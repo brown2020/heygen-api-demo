@@ -2,6 +2,10 @@
 
 import { auth } from "@clerk/nextjs/server";
 import axios from "axios";
+import { axiosErrorSummary } from "@/libs/axios-error";
+import { assertSafeStorageId } from "@/libs/storage-id";
+import { debitGenerationCredit, refundGenerationCredit } from "@/server/billing";
+import { getUserHeygenApiKey } from "@/server/heygen-user";
 
 interface GenerateVideoResponse {
   video_id: string;
@@ -14,7 +18,6 @@ type VoiceSettings =
   | { type: "silence"; duration: number };
 
 export async function generateTalkingPhotoVideo(
-  apiKey: string,
   talkingPhotoId: string,
   voiceId?: string,
   script?: string,
@@ -22,6 +25,27 @@ export async function generateTalkingPhotoVideo(
 ): Promise<GenerateVideoResponse | null> {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
+
+  let safePhotoId: string;
+  try {
+    safePhotoId = assertSafeStorageId(talkingPhotoId, "Talking photo id");
+  } catch (error) {
+    return {
+      video_id: "",
+      error: error instanceof Error ? error.message : "Talking photo id is invalid",
+    };
+  }
+
+  let apiKey: string;
+  try {
+    apiKey = await getUserHeygenApiKey(userId);
+    await debitGenerationCredit(userId);
+  } catch (error) {
+    return {
+      video_id: "",
+      error: error instanceof Error ? error.message : "Could not start generation",
+    };
+  }
 
   try {
     const voice: VoiceSettings = audioUrl
@@ -33,13 +57,12 @@ export async function generateTalkingPhotoVideo(
     const response = await axios.post(
       "https://api.heygen.com/v2/video/generate",
       {
-        // Prefer fixtures when HEYGEN_USE_FIXTURES=true (eval/CI) to avoid paid credit burn.
         test: process.env.HEYGEN_USE_FIXTURES === "true",
         video_inputs: [
           {
             character: {
               type: "talking_photo",
-              talking_photo_id: talkingPhotoId,
+              talking_photo_id: safePhotoId,
               scale: 1,
               talking_photo_style: "square",
               talking_style: "stable",
@@ -56,24 +79,34 @@ export async function generateTalkingPhotoVideo(
           "x-api-key": apiKey,
           "Content-Type": "application/json",
         },
+        timeout: 30_000,
+        maxRedirects: 0,
       }
     );
 
     const videoId = response.data?.data?.video_id;
-    if (!videoId) {
-      console.error(
-        "No video ID found in response data:",
-        JSON.stringify(response.data, null, 2)
-      );
+    if (typeof videoId !== "string" || !videoId) {
+      throw new Error("NO_VIDEO_ID");
+    }
+    assertSafeStorageId(videoId, "Video id");
+
+    return { video_id: videoId };
+  } catch (error: unknown) {
+    try {
+      await refundGenerationCredit(userId);
+    } catch (refundError) {
+      console.error("Credit refund failed:", axiosErrorSummary(refundError));
+    }
+
+    if (error instanceof Error && error.message === "NO_VIDEO_ID") {
       return {
         video_id: "",
         error: "Failed to retrieve video ID. Please try again.",
       };
     }
 
-    return { video_id: videoId };
-  } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
+      console.error("HeyGen generate failed:", axiosErrorSummary(error));
       const statusCode = error.response?.status;
       if (statusCode === 429) {
         return {
@@ -81,22 +114,18 @@ export async function generateTalkingPhotoVideo(
           error: "Rate limit exceeded. Please try again later.",
         };
       }
-
       const apiErrorMessage =
-        error.response?.data?.error?.message ||
-        error.response?.data?.message ||
-        error.message;
+        (typeof error.response?.data?.error?.message === "string" &&
+          error.response.data.error.message) ||
+        (typeof error.response?.data?.message === "string" && error.response.data.message) ||
+        "HeyGen request failed";
       return {
         video_id: "",
         error: `API Error: ${apiErrorMessage}`,
       };
-    } else if (error instanceof Error) {
-      // Handle generic errors
-      console.error("Unexpected error occurred:", error.message);
-    } else {
-      console.error("An unknown error occurred.");
     }
 
+    console.error("Unexpected generate error:", axiosErrorSummary(error));
     return {
       video_id: "",
       error: "An error occurred while generating the video. Please try again.",
