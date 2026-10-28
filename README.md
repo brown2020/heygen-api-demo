@@ -1,55 +1,59 @@
 # HeyGen API Demo
 
-Demo Next.js app that generates talking-photo videos with the [HeyGen](https://www.heygen.com/) API. Sign in with Clerk, save your HeyGen API key on your profile, sync talking photos / avatars, generate videos (with status polling), and buy credits via Stripe. Live demo: [https://heygen-api-demo.vercel.app](https://heygen-api-demo.vercel.app).
+Next.js app that generates talking-photo videos with the [HeyGen](https://www.heygen.com/) API. Users sign in with Clerk, save a HeyGen API key on their profile, sync talking photos, generate videos, and buy a fixed credit pack with Stripe. Live demo: [https://heygen-api-demo.vercel.app](https://heygen-api-demo.vercel.app).
 
 ## Features
 
-- **Clerk authentication** (hosted sign-in / user button); optional Firebase custom-token bridge for Firestore
-- **HeyGen integration** — list avatars and talking photos, generate talking-photo videos (text / audio / silence voice), poll video status
-- **Per-user HeyGen API key** stored on the profile (BYOK)
-- **Previous videos** gallery and generation UI
-- **Stripe credits** — PaymentIntent checkout and payment history
-- **Zustand** stores for auth, profile, and payments
-- Soft route protection via Clerk middleware (`src/proxy.ts`)
+- Clerk-hosted sign-in. Protected routes are enforced in `src/proxy.ts`.
+- Firebase custom-token bridge so Firestore rules see the Clerk user id.
+- Per-user HeyGen API key, read on the server for generate, status, and avatar sync.
+- Talking photos and videos stored under that user. Playback URLs last 15 minutes.
+- Browser polling of video status (the server checks HeyGen once per call).
+- Stripe credit pack at a fixed price. Credits are granted only by the Admin SDK.
+- Optional Stripe webhook. If its secret is unset, the webhook route returns 503 and the signed-in success page still grants the pack.
 
 ## Tech stack
 
-| Layer | Tech |
+| Layer | Package |
 | --- | --- |
-| Framework | Next.js ^16.3.6 (App Router) |
-| UI | React ^19.2.5, Tailwind CSS ^4.2.4, Lucide |
-| Language | TypeScript ^6.0.3 |
-| Auth | Clerk (`@clerk/nextjs` 6.39.3) |
-| Data | Firebase ^12.12.1 + Firebase Admin ^13.8.0 |
-| Payments | Stripe ^22 + React Stripe.js |
-| State | Zustand ^5.0.12 |
-| HTTP | Axios |
-| Tests | Vitest ^3.2.4, ESLint 9 |
+| Framework | Next.js 16.4.3 (App Router) |
+| UI | React 19.3.1, Tailwind CSS 4.3.3, Lucide 1.63.0 |
+| Language | TypeScript 7.0.2 (`tsc`). ESLint loads the TypeScript 6 API via `typescript` aliased to `@typescript/typescript6` (`tsc6` reports 6.0.3) |
+| Auth | `@clerk/nextjs` 7.9.22 |
+| Data | `firebase` 13.1.0, `firebase-admin` 14.5.0 |
+| Payments | `stripe` 23.0.1, `@stripe/stripe-js` 10.2.0, `@stripe/react-stripe-js` 7.0.1 |
+| State | Zustand 5.0.16 |
+| HTTP | Axios 1.21.0 |
+| Tests | Vitest 5.0.5, Vite 8.3.5 |
+| Lint | ESLint 10.13.0, `eslint-config-next` 16.4.3 |
+
+`firebase-admin` 14 / `jwks-rsa` 4 stays on `jose` 5.10.0 through the `jwks-rsa` override.
 
 ## Project structure
 
 ```
 src/
-  app/                 # Pages: home, generate, avatars, profile, payment-*
-  actions/             # Server actions: HeyGen generate/retrieve/avatars, Stripe payments
-  components/          # Generate, Avatars, Profile, payments UI, Header/Footer
-  firebase/            # Client + Admin (soft-fail when env missing)
-  libs/                # Clerk config helpers, HeyGen response parsers
-  zustand/             # Auth, profile, payments stores
-  proxy.ts             # Clerk middleware / route protection
-firestore.rules  storage.rules  .env.example
+  app/                 # Pages plus POST /api/stripe/webhook
+  actions/             # HeyGen, Stripe, and video listing server actions
+  components/          # Generate, avatars, profile, payments, header
+  firebase/            # Client init (skips when unset) and lazy Admin init
+  libs/                # Billing, URL allowlist, parsers, proxy decision
+  server/              # Stripe client, credit ledger, HeyGen key lookup
+  zustand/             # Auth, profile, and payment-history stores
+  proxy.ts             # Clerk route protection
+firestore.rules  storage.rules  cors.json  .env.example
 ```
 
 ## Getting started
 
 ### Prerequisites
 
-- Node.js 22+
+- Node.js 22+ (the Firebase client packages declare Node >= 24.12.0; CI still runs on 22 and the secret-free build succeeds there)
 - npm
 - Clerk application
-- Firebase project (optional but used for profile / credits persistence)
+- Firebase project for profile, credits, and media
 - Stripe account
-- A HeyGen API key (entered in-app on the profile page)
+- A HeyGen API key entered on the profile page (not a server env var)
 
 ### Install
 
@@ -66,21 +70,39 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Environment variables
 
-| Name | Purpose | Where to get it |
+Names only. Copy `.env.example` and set values locally or in the host. Never commit values.
+
+| Name | Required | Purpose |
 | --- | --- | --- |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key | [Clerk Dashboard](https://dashboard.clerk.com) |
-| `CLERK_SECRET_KEY` | Clerk secret key | Same |
-| `NEXT_PUBLIC_FIREBASE_*` | Client Firebase config | Firebase Console → Project settings |
-| `FIREBASE_*` | Admin service account fields | Firebase Console → Service accounts |
-| `NEXT_PUBLIC_STRIPE_KEY` | Stripe publishable key | Stripe Dashboard |
-| `STRIPE_SECRET_KEY` | Stripe secret key | Stripe Dashboard |
-| `STRIPE_WEBHOOK_SECRET` | Optional Stripe webhook signing secret. If unset, `POST /api/stripe/webhook` returns 503 and does not grant credits. Checkout success still grants credits for the signed-in user. | Stripe Dashboard → Webhooks |
-| `NEXT_PUBLIC_STRIPE_PRODUCT_NAME` | Credit product label | Your choice / Stripe product |
-| `HEYGEN_USE_FIXTURES` | When `true`, HeyGen generate calls use test mode (avoid burning credits in CI/eval) | Set locally / in CI as needed |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | For sign-in | Clerk publishable key. When missing, development still renders; production protected routes return 401 |
+| `CLERK_SECRET_KEY` | For server auth | Clerk secret key, read by the Clerk SDK |
+| `NEXT_PUBLIC_FIREBASE_APIKEY` | For client data | Firebase web apiKey |
+| `NEXT_PUBLIC_FIREBASE_AUTHDOMAIN` | For client data | Firebase authDomain |
+| `NEXT_PUBLIC_FIREBASE_PROJECTID` | For client data | Firebase projectId |
+| `NEXT_PUBLIC_FIREBASE_STORAGEBUCKET` | For client data and Admin storage | Storage bucket name |
+| `NEXT_PUBLIC_FIREBASE_MESSAGINGSENDERID` | For client data | Firebase messagingSenderId |
+| `NEXT_PUBLIC_FIREBASE_APPID` | For client data | Firebase appId |
+| `NEXT_PUBLIC_FIREBASE_MEASUREMENTID` | No | Analytics measurement id |
+| `FIREBASE_PROJECT_ID` | For Admin | Service account project id |
+| `FIREBASE_CLIENT_EMAIL` | For Admin | Service account client email |
+| `FIREBASE_PRIVATE_KEY` | For Admin | Service account private key |
+| `FIREBASE_TYPE` | No | Present in `.env.example`; Admin init does not read it |
+| `FIREBASE_PRIVATE_KEY_ID` | No | Present in `.env.example`; Admin init does not read it |
+| `FIREBASE_CLIENT_ID` | No | Present in `.env.example`; Admin init does not read it |
+| `FIREBASE_AUTH_URI` | No | Present in `.env.example`; Admin init does not read it |
+| `FIREBASE_TOKEN_URI` | No | Present in `.env.example`; Admin init does not read it |
+| `FIREBASE_AUTH_PROVIDER_X509_CERT_URL` | No | Present in `.env.example`; Admin init does not read it |
+| `FIREBASE_CLIENT_CERTS_URL` | No | Present in `.env.example`; Admin init does not read it |
+| `FIREBASE_UNIVERSE_DOMAIN` | No | Present in `.env.example`; Admin init does not read it |
+| `NEXT_PUBLIC_STRIPE_KEY` | For checkout | Stripe publishable key |
+| `STRIPE_SECRET_KEY` | For charges and grants | Stripe secret key. The client is constructed only when this is set |
+| `NEXT_PUBLIC_STRIPE_PRODUCT_NAME` | For checkout | Label stored on the PaymentIntent |
+| `STRIPE_WEBHOOK_SECRET` | No | Webhook signing secret. When unset, `POST /api/stripe/webhook` returns 503 |
+| `HEYGEN_USE_FIXTURES` | No | When `true`, HeyGen generate calls set `test: true` |
 
-HeyGen API keys are supplied by each user on their profile, not via a shared server env var.
+HeyGen API keys are saved by each user on their profile.
 
-Firebase and Clerk client init soft-skip when keys are missing so CI builds can succeed without secrets.
+Client Firebase init and Admin init skip or throw a single configuration error when their required env vars are missing, so `npm run build` succeeds with empty secrets.
 
 ## Scripts
 
@@ -88,36 +110,36 @@ Firebase and Clerk client init soft-skip when keys are missing so CI builds can 
 | --- | --- |
 | `npm run dev` | Dev server |
 | `npm run build` | Production build |
-| `npm start` | Serve production build |
+| `npm start` | Serve the production build |
 | `npm run lint` | ESLint |
-| `npm run typecheck` | `tsc --noEmit` |
-| `npm test` | Vitest (HeyGen response fixtures — no live API) |
-| `npm run validate` | lint + typecheck + test + build |
+| `npm run typecheck` | `tsc --noEmit` (TypeScript 7) |
+| `npm test` | Vitest. No live HeyGen, Stripe, or Firebase calls |
+| `npm run validate` | lint, typecheck, test, and build |
 | `npm run doctor` | React Doctor |
 
 ## Testing and CI
 
-- Unit tests cover HeyGen response parsing and auth constants with fixtures (no live HeyGen calls).
-- `.github/workflows/ci.yml` on `dev` / `main`: lint → typecheck → test → build (secret-free gate).
+`.github/workflows/ci.yml` runs on `dev` and `main`: `npm ci --ignore-scripts`, lint, typecheck, test, build. The gate job does not receive secrets.
 
-## Firebase
+## Firebase and Stripe
 
-Deploy these files in the Firebase console or CLI (this repo does not deploy them):
+Deploy from the Firebase console or CLI. This repo does not deploy them.
 
-- `firestore.rules` — owner-scoped profiles, talking photos, and videos. Clients cannot write `credits`, payment documents, or video documents.
-- `storage.rules` — owner read of `videos/{userId}/**`; writes are admin-only.
+- `firestore.rules` — owner-scoped profiles, talking photos, and videos. Clients cannot change `credits` or write payment or video documents.
+- `storage.rules` — the owner can read `videos/{userId}/**`. Writes are Admin-only.
+- `cors.json` — GET from localhost and the production Vercel host. Apply it to the bucket separately if you use it.
 
-No composite Firestore indexes are required. Credit packs and video playback are granted with the Admin SDK. Configure the Clerk ↔ Firebase integration so the custom-token uid matches the Clerk user id.
+No composite Firestore indexes are required. The Clerk Firebase JWT template must use the Clerk user id as the Firebase uid.
 
-Point a Stripe webhook at `POST /api/stripe/webhook` for `payment_intent.succeeded`, and set `STRIPE_WEBHOOK_SECRET`. Until that secret is set, the route stays disabled and the success page performs the same idempotent grant.
+Register `POST /api/stripe/webhook` for `payment_intent.succeeded` when `STRIPE_WEBHOOK_SECRET` is set.
 
 ## Deployment
 
-Vercel-friendly Next.js app. Set env vars in the host dashboard. Prefer `HEYGEN_USE_FIXTURES=true` in non-production eval environments. In production, protected routes stay closed unless Clerk is configured.
+Set the env var names above in the host. Do not put secrets in the workflow file. In production, protected routes stay closed unless Clerk is configured.
 
 ## Contributing
 
-Branch from `dev`. Do not call live HeyGen in CI. Never commit `.env.local` or inline secrets in workflows.
+Branch from `dev`. Do not call live HeyGen in CI. Never commit `.env.local` or inline secrets.
 
 ## License
 
