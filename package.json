@@ -13,21 +13,21 @@
     "doctor": "npx react-doctor@latest . -y --offline"
   },
   "dependencies": {
-    "@clerk/nextjs": "6.39.3",
-    "@stripe/react-stripe-js": "^6.2.0",
-    "@stripe/stripe-js": "^9.3.0",
-    "axios": "^1.20.0",
-    "firebase": "^12.12.1",
-    "firebase-admin": "^13.8.0",
-    "lucide-react": "0.468.0",
-    "next": "^16.3.6",
-    "react": "^19.2.5",
-    "react-dom": "^19.2.5",
-    "react-hot-toast": "^2.6.0",
-    "react-spinners": "^0.17.0",
+    "@clerk/nextjs": "^7.9.22",
+    "@stripe/react-stripe-js": "^7.0.1",
+    "@stripe/stripe-js": "^10.2.0",
+    "axios": "^1.21.0",
+    "firebase": "^13.1.0",
+    "firebase-admin": "^14.5.0",
+    "lucide-react": "^1.63.0",
+    "next": "^16.4.3",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-hot-toast": "^2.6.1",
+    "react-spinners": "^0.17.1",
     "react-textarea-autosize": "^8.5.9",
-    "stripe": "^22.0.2",
-    "zustand": "^5.0.12"
+    "stripe": "^23.0.1",
+    "zustand": "^5.0.16"
   },
   "devDependencies": {
     "@eslint/compat": "^2.0.5",
@@ -36,17 +36,19 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "eslint": "^9.39.4",
-    "eslint-config-next": "^16.3.6",
+    "eslint-config-next": "^16.4.3",
     "postcss": "^8.5.10",
     "tailwindcss": "^4.2.4",
     "typescript": "^6.0.3",
-    "vitest": "^3.2.4"
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5"
   },
   "overrides": {
     "protobufjs": ">=7.5.5",
     "fast-xml-parser": ">=5.7.0",
     "@tootallnate/once": "3.0.1",
     "http-proxy-agent": "^7.0.0",
-    "uuid": ">=14.0.0"
+    "uuid": ">=14.0.0",
+    "@grpc/grpc-js": ">=1.14.6"
   }
 }
