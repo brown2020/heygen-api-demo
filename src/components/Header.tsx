@@ -12,7 +12,7 @@ export default function Header() {
   const showGenerate = Boolean(profile.selectedAvatar || profile.selectedTalkingPhoto);
 
   return (
-    <header className="flex h-14 items-center justify-between px-4 py-2 border-b border-slate-300 bg-white">
+    <header className="relative z-50 flex h-14 items-center justify-between px-4 py-2 border-b border-slate-300 bg-white">
       <Link href="/" className="font-medium text-xl">
         Heygen API Demo
       </Link>

@@ -46,7 +46,7 @@ export default function UserMenu() {
         <div
           id={menuId}
           role="menu"
-          className="absolute right-0 z-10 mt-2 w-56 rounded-md border border-slate-200 bg-white p-2 shadow-md"
+          className="absolute right-0 z-50 mt-2 w-56 rounded-md border border-slate-200 bg-white p-2 shadow-md"
         >
           {user.email && (
             <p className="px-2 py-1 text-xs text-slate-600 break-all">{user.email}</p>
