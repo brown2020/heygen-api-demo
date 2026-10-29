@@ -2,7 +2,7 @@
 
 import { isClerkConfigured } from "@/libs/clerk-config";
 import { useAuthStore } from "@/zustand/useAuthStore";
-import { SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
+import { Show, SignInButton } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
 import Footer from "./Footer";
@@ -84,10 +84,10 @@ export default function Home() {
 
           {isClerkConfigured ? (
             <>
-              <SignedIn>
+              <Show when="signed-in">
                 <SignedInHome />
-              </SignedIn>
-              <SignedOut>
+              </Show>
+              <Show when="signed-out">
                 <WelcomeCopy />
                 <div className="flex justify-center">
                   <SignInButton mode="modal">
@@ -99,7 +99,7 @@ export default function Home() {
                     </button>
                   </SignInButton>
                 </div>
-              </SignedOut>
+              </Show>
             </>
           ) : (
             <>

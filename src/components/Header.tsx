@@ -6,8 +6,7 @@ import { useAuthStore } from "@/zustand/useAuthStore";
 import { useInitializeStores } from "@/zustand/useInitializeStores";
 import useProfileStore from "@/zustand/useProfileStore";
 import {
-  SignedIn,
-  SignedOut,
+  Show,
   SignInButton,
   useAuth,
   UserButton,
@@ -128,10 +127,10 @@ function HeaderWithClerk() {
 
   return (
     <NavShell>
-      <SignedOut>
+      <Show when="signed-out">
         <SignInButton />
-      </SignedOut>
-      <SignedIn>
+      </Show>
+      <Show when="signed-in">
         {(profile.selectedAvatar || profile.selectedTalkingPhoto) && (
           <Link href="/generate" className="underline-offset-2 hover:underline">
             Generate
@@ -144,7 +143,7 @@ function HeaderWithClerk() {
           Profile
         </Link>
         <UserButton />
-      </SignedIn>
+      </Show>
     </NavShell>
   );
 }
