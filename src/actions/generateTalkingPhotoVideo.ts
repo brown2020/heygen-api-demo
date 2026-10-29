@@ -1,11 +1,11 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
 import axios from "axios";
 import { axiosErrorSummary } from "@/libs/axios-error";
 import { assertSafeStorageId } from "@/libs/storage-id";
 import { debitGenerationCredit, refundGenerationCredit } from "@/server/billing";
 import { getUserHeygenApiKey } from "@/server/heygen-user";
+import { requireUser } from "@/server/verify-id-token";
 
 interface GenerateVideoResponse {
   video_id: string;
@@ -23,8 +23,7 @@ export async function generateTalkingPhotoVideo(
   script?: string,
   audioUrl?: string
 ): Promise<GenerateVideoResponse | null> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const { uid: userId } = await requireUser();
 
   let safePhotoId: string;
   try {

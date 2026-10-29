@@ -6,7 +6,7 @@ on:
 jobs:
   gate:
     runs-on: ubuntu-latest
-    # Client NEXT_PUBLIC_* / Clerk / Stripe / Firebase are optional for this gate:
+    # Client NEXT_PUBLIC_* / Stripe / Firebase are optional for this gate:
     # firebaseClient and firebaseAdmin skip or soft-fail init when unset so
     # lint/typecheck/test/build succeed. Never inline keys here — if a future
     # smoke job needs web config, inject only via ${{ secrets.* }} on that job

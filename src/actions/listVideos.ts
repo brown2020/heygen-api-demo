@@ -1,9 +1,9 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
 import { assertSafeStorageId } from "@/libs/storage-id";
 import { SIGNED_URL_TTL_MS } from "@/libs/video-poll";
 import { getAdminServices } from "@/firebase/firebaseAdmin";
+import { requireUser } from "@/server/verify-id-token";
 
 export type ListedVideo = {
   id: string;
@@ -11,8 +11,7 @@ export type ListedVideo = {
 };
 
 export async function listTalkingPhotoVideos(talkingPhotoId: string): Promise<ListedVideo[]> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const { uid: userId } = await requireUser();
   const safePhotoId = assertSafeStorageId(talkingPhotoId, "Talking photo id");
   const { bucket, db } = getAdminServices();
   const snap = await db

@@ -16,6 +16,7 @@ service cloud.firestore {
             && data.preview_image_url.matches('^https://[^\\s]+$'));
     }
 
+    // userId is the Firebase Auth uid. request.auth.uid must match that path.
     match /users/{userId} {
       allow read: if isOwner(userId);
       allow create: if isOwner(userId)

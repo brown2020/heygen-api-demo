@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-import { decideProxyAccess } from "@/libs/auth-constants";
+import { decideProxyAccess } from "@/libs/route-guard";
 import { SIGNED_URL_TTL_MS, VIDEO_POLL_DEADLINE_MS } from "@/libs/video-poll";
 
 const firestoreRules = readFileSync("firestore.rules", "utf8");
@@ -10,6 +10,8 @@ const retrieveVideo = readFileSync("src/actions/retrieveVideo.ts", "utf8");
 const paymentActions = readFileSync("src/actions/paymentActions.ts", "utf8");
 const webhook = readFileSync("src/app/api/stripe/webhook/route.ts", "utf8");
 const cors = readFileSync("cors.json", "utf8");
+const proxySource = readFileSync("src/proxy.ts", "utf8");
+const verifySource = readFileSync("src/server/verify-id-token.ts", "utf8");
 
 describe("firestore rules", () => {
   it("keeps credits and payments server-owned and scopes media to the owner", () => {
@@ -18,6 +20,7 @@ describe("firestore rules", () => {
     expect(firestoreRules).toContain("allow write: if false");
     expect(firestoreRules).not.toContain("allow read, write: if isAuthenticated()");
     expect(firestoreRules).toContain("match /users/{userId}");
+    expect(firestoreRules).toContain("request.auth.uid == userId");
     expect(firestoreRules).toContain("match /talkingPhotos/{photoId}");
     expect(firestoreRules).not.toMatch(/match \/talkingPhotos\/\{photoId\}[\s\S]*allow read, write: if isAuthenticated/);
   });
@@ -60,34 +63,38 @@ describe("storage cors", () => {
 });
 
 describe("decideProxyAccess", () => {
-  it("fails closed for protected routes in production without Clerk", () => {
+  it("fails closed for protected routes in production without a Firebase session", () => {
     expect(
       decideProxyAccess({
-        clerkConfigured: false,
+        hasSession: false,
         isProduction: true,
         pathname: "/profile",
       })
     ).toBe("deny");
     expect(
       decideProxyAccess({
-        clerkConfigured: false,
+        hasSession: false,
         isProduction: true,
         pathname: "/",
       })
     ).toBe("allow");
     expect(
       decideProxyAccess({
-        clerkConfigured: false,
+        hasSession: false,
         isProduction: false,
         pathname: "/avatars",
       })
     ).toBe("allow");
     expect(
       decideProxyAccess({
-        clerkConfigured: true,
+        hasSession: true,
         isProduction: true,
         pathname: "/profile",
       })
-    ).toBe("clerk");
+    ).toBe("allow");
+    expect(proxySource).not.toContain("clerk");
+    expect(proxySource).toContain("verifyFirebaseIdToken");
+    expect(verifySource).toContain("verifyIdToken");
+    expect(paymentActions).not.toContain("@clerk");
   });
 });

@@ -17,12 +17,6 @@ const nextConfig = {
       },
       {
         protocol: "https",
-        hostname: "img.clerk.com",
-        port: "",
-        pathname: "/**",
-      },
-      {
-        protocol: "https",
         hostname: "files2.heygen.ai",
         port: "",
         pathname: "/**",

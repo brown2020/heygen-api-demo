@@ -1,19 +1,18 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
 import {
   CREDIT_PACK_PRICE_CENTS,
   CREDIT_PACK_PURPOSE,
   assessCreditPackPayment,
 } from "@/libs/billing";
+import { requireUser } from "@/server/verify-id-token";
 import { grantCreditPack } from "@/server/billing";
 import { getStripe } from "@/server/stripe";
 
 const PAYMENT_INTENT_ID = /^pi_[A-Za-z0-9]+$/;
 
 export async function createPaymentIntent(): Promise<string> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const { uid: userId } = await requireUser();
   const product = process.env.NEXT_PUBLIC_STRIPE_PRODUCT_NAME;
   if (!product) throw new Error("Stripe product name is not defined");
 
@@ -42,8 +41,7 @@ export async function finalizePayment(paymentIntentId: string): Promise<{
   creditsGranted: number;
   alreadyProcessed: boolean;
 }> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const { uid: userId } = await requireUser();
   if (!PAYMENT_INTENT_ID.test(paymentIntentId)) {
     throw new Error("Invalid payment intent");
   }

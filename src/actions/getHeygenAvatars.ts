@@ -3,8 +3,8 @@
 import type { HeygenAvatarResponse, TalkingPhoto } from "@/types/heygen";
 import { axiosErrorSummary } from "@/libs/axios-error";
 import { extractTalkingPhotos } from "@/libs/heygen-response";
-import { auth } from "@clerk/nextjs/server";
 import { getUserHeygenApiKey } from "@/server/heygen-user";
+import { requireUser } from "@/server/verify-id-token";
 import axios from "axios";
 
 async function fetchTalkingPhotos(headers: Record<string, string>) {
@@ -32,8 +32,7 @@ async function fetchTalkingPhotos(headers: Record<string, string>) {
 }
 
 export async function getHeygenAvatars(): Promise<HeygenAvatarResponse | null> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const { uid: userId } = await requireUser();
   let apiKey: string;
   try {
     apiKey = await getUserHeygenApiKey(userId);

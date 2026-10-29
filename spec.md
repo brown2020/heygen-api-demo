@@ -8,7 +8,7 @@ A signed-in user connects their own HeyGen API key, syncs that account's talking
 
 ## Actors
 
-- **Visitor.** Can open `/`. Sign-in is Clerk's hosted UI.
+- **Visitor.** Can open `/` and use the email/password or Google sign-in form.
 - **Signed-in user.** Can open `/avatars`, `/generate`, `/profile`, `/payment-attempt`, and `/payment-success`.
 - **Stripe.** Sends `payment_intent.succeeded` to the webhook when that endpoint is configured.
 - **Operator.** Supplies env vars and deploys Firebase rules outside this app.
@@ -17,7 +17,7 @@ A signed-in user connects their own HeyGen API key, syncs that account's talking
 
 | Path | Access |
 | --- | --- |
-| `/` | Public. Shows Clerk sign-in when Clerk is configured |
+| `/` | Public. Shows the Firebase Auth form when Firebase web config is present |
 | `/avatars` | Protected |
 | `/generate` | Protected |
 | `/profile` | Protected |
@@ -25,15 +25,16 @@ A signed-in user connects their own HeyGen API key, syncs that account's talking
 | `/payment-success` | Protected. Reads `payment_intent` from the query string |
 | `POST /api/stripe/webhook` | Public route. Grants credits only after a valid Stripe signature |
 
-`src/proxy.ts` runs Clerk protection on the protected paths. If the Clerk publishable key is missing, development allows those pages through and production returns 401. Server actions still require a Clerk user id.
+`src/proxy.ts` verifies the Firebase ID token cookie on protected paths. Development allows those pages through without a session. Production returns 401 when the token is missing or `verifyIdToken` rejects it. Server actions call `verifyIdToken` and reject unauthenticated callers.
 
 ## Authentication and identity
 
-1. Clerk hosts sign-in, sign-up, and the user button.
-2. After sign-in, the header requests a Clerk token from the `integration_firebase` JWT template and signs into Firebase with that custom token.
-3. Firestore paths and security rules use that uid. The integration is correct only when the Firebase uid equals the Clerk user id.
-4. If the custom-token exchange fails, the app keeps the Clerk user id in client state and sets an auth error. It does not clear the Clerk identity.
-5. The browser never writes `isAdmin`, `premium`, or `credits`.
+1. The home page offers email/password sign-in, email/password sign-up, and Google sign-in (`signInWithPopup`). The header shows a user menu with sign-out when a session exists.
+2. After sign-in, the client sends the Firebase ID token to `establishAuthSession`. The server verifies it with `firebase-admin` `verifyIdToken` and stores it in an httpOnly cookie. Later server actions read that cookie and verify it again. The uid from the token is the user id.
+3. Firestore paths and security rules use that Firebase Auth uid (`request.auth.uid == userId`).
+4. If `users/{firebaseUid}` does not exist and the token email is verified, the server copies at most one legacy `users/{clerkUserId}` tree with a matching `authEmail`, root `email`, or profile `email`. It never deletes the old documents. Unverified emails, documents with no email field, and ambiguous matches are skipped.
+5. If the session cookie cannot be created, the app keeps the Firebase user and sets an auth error.
+6. The browser never writes `isAdmin`, `premium`, or `credits`.
 
 ## Profile
 
@@ -68,7 +69,7 @@ Voice selection: an audio URL uses HeyGen's audio voice; otherwise a script plus
 
 - The only pack is $99.99 (9999 cents). The server ignores any other amount.
 - A succeeded PaymentIntent in USD with metadata `purpose=credit_pack` and a valid `userId` grants `amount + 1` credits (10000 for this pack).
-- `finalizePayment` requires the signed-in Clerk user to be that `userId`. It does not return the PaymentIntent client secret. `createPaymentIntent` returns the client secret so Stripe.js can confirm the payment.
+- `finalizePayment` requires the verified Firebase uid to be that `userId`. It does not return the PaymentIntent client secret. `createPaymentIntent` returns the client secret so Stripe.js can confirm the payment.
 - The grant writes `users/{uid}/payments/{paymentIntentId}` and increments profile credits in one transaction. A second delivery does not grant again.
 - The webhook performs the same grant when `STRIPE_WEBHOOK_SECRET` and `STRIPE_SECRET_KEY` are set and the signature matches. Otherwise it returns 503 and does not grant.
 - The payments page lists the user's payment documents. The displayed id is the Stripe id stored on the document. Clients cannot write that collection.
@@ -87,7 +88,7 @@ Voice selection: an audio URL uses HeyGen's audio voice; otherwise a script plus
 
 ## Out of scope
 
-- No first-party email/password forms.
+- No password-reset form. Email/password sign-in and sign-up are on the home page.
 - No live HeyGen calls in CI.
 - No automatic Firebase rules or Storage CORS deploy from this repo.
 - No model or AI-provider configuration. HeyGen is called over its REST API.

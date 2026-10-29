@@ -1,11 +1,11 @@
 # HeyGen API Demo
 
-Next.js app that generates talking-photo videos with the [HeyGen](https://www.heygen.com/) API. Users sign in with Clerk, save a HeyGen API key on their profile, sync talking photos, generate videos, and buy a fixed credit pack with Stripe. Live demo: [https://heygen-api-demo.vercel.app](https://heygen-api-demo.vercel.app).
+Next.js app that generates talking-photo videos with the [HeyGen](https://www.heygen.com/) API. Users sign in with Firebase Auth (email/password or Google), save a HeyGen API key on their profile, sync talking photos, generate videos, and buy a fixed credit pack with Stripe. Live demo: [https://heygen-api-demo.vercel.app](https://heygen-api-demo.vercel.app).
 
 ## Features
 
-- Clerk-hosted sign-in. Protected routes are enforced in `src/proxy.ts`.
-- Firebase custom-token bridge so Firestore rules see the Clerk user id.
+- Email/password and Google sign-in. Protected routes are enforced in `src/proxy.ts` with a Firebase ID token.
+- Firestore paths and security rules use the Firebase Auth uid.
 - Per-user HeyGen API key, read on the server for generate, status, and avatar sync.
 - Talking photos and videos stored under that user. Playback URLs last 15 minutes.
 - Browser polling of video status (the server checks HeyGen once per call).
@@ -19,7 +19,7 @@ Next.js app that generates talking-photo videos with the [HeyGen](https://www.he
 | Framework | Next.js 16.4.3 (App Router) |
 | UI | React 19.3.1, Tailwind CSS 4.3.3, Lucide 1.63.0 |
 | Language | TypeScript 7.0.2 (`tsc`). ESLint loads the TypeScript 6 API via `typescript` aliased to `@typescript/typescript6` (`tsc6` reports 6.0.3) |
-| Auth | `@clerk/nextjs` 7.9.22 |
+| Auth | Firebase Auth (`firebase` 13.1.0, verified on the server with `firebase-admin`) |
 | Data | `firebase` 13.1.0, `firebase-admin` 14.5.0 |
 | Payments | `stripe` 23.0.1, `@stripe/stripe-js` 10.2.0, `@stripe/react-stripe-js` 7.0.1 |
 | State | Zustand 5.0.16 |
@@ -40,7 +40,7 @@ src/
   libs/                # Billing, URL allowlist, parsers, proxy decision
   server/              # Stripe client, credit ledger, HeyGen key lookup
   zustand/             # Auth, profile, and payment-history stores
-  proxy.ts             # Clerk route protection
+  proxy.ts             # Firebase session route protection
 firestore.rules  storage.rules  cors.json  .env.example
 ```
 
@@ -48,10 +48,9 @@ firestore.rules  storage.rules  cors.json  .env.example
 
 ### Prerequisites
 
-- Node.js 22+ (the Firebase client packages declare Node >= 24.12.0; CI still runs on 22 and the secret-free build succeeds there)
+- Node.js 24 (CI runs on Node 24; the Firebase client packages declare Node >= 24.12.0)
 - npm
-- Clerk application
-- Firebase project for profile, credits, and media
+- Firebase project with Email/Password and Google sign-in enabled, used for profile, credits, and media
 - Stripe account
 - A HeyGen API key entered on the profile page (not a server env var)
 
@@ -74,18 +73,16 @@ Names only. Copy `.env.example` and set values locally or in the host. Never com
 
 | Name | Required | Purpose |
 | --- | --- | --- |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | For sign-in | Clerk publishable key. When missing, development still renders; production protected routes return 401 |
-| `CLERK_SECRET_KEY` | For server auth | Clerk secret key, read by the Clerk SDK |
-| `NEXT_PUBLIC_FIREBASE_APIKEY` | For client data | Firebase web apiKey |
+| `NEXT_PUBLIC_FIREBASE_APIKEY` | For sign-in and client data | Firebase web apiKey |
 | `NEXT_PUBLIC_FIREBASE_AUTHDOMAIN` | For client data | Firebase authDomain |
 | `NEXT_PUBLIC_FIREBASE_PROJECTID` | For client data | Firebase projectId |
 | `NEXT_PUBLIC_FIREBASE_STORAGEBUCKET` | For client data and Admin storage | Storage bucket name |
 | `NEXT_PUBLIC_FIREBASE_MESSAGINGSENDERID` | For client data | Firebase messagingSenderId |
 | `NEXT_PUBLIC_FIREBASE_APPID` | For client data | Firebase appId |
 | `NEXT_PUBLIC_FIREBASE_MEASUREMENTID` | No | Analytics measurement id |
-| `FIREBASE_PROJECT_ID` | For Admin | Service account project id |
-| `FIREBASE_CLIENT_EMAIL` | For Admin | Service account client email |
-| `FIREBASE_PRIVATE_KEY` | For Admin | Service account private key |
+| `FIREBASE_PROJECT_ID` | For Admin and ID token checks | Service account project id |
+| `FIREBASE_CLIENT_EMAIL` | For Admin and ID token checks | Service account client email |
+| `FIREBASE_PRIVATE_KEY` | For Admin and ID token checks | Service account private key |
 | `FIREBASE_TYPE` | No | Present in `.env.example`; Admin init does not read it |
 | `FIREBASE_PRIVATE_KEY_ID` | No | Present in `.env.example`; Admin init does not read it |
 | `FIREBASE_CLIENT_ID` | No | Present in `.env.example`; Admin init does not read it |
@@ -129,13 +126,27 @@ Deploy from the Firebase console or CLI. This repo does not deploy them.
 - `storage.rules` — the owner can read `videos/{userId}/**`. Writes are Admin-only.
 - `cors.json` — GET from localhost and the production Vercel host. Apply it to the bucket separately if you use it.
 
-No composite Firestore indexes are required. The Clerk Firebase JWT template must use the Clerk user id as the Firebase uid.
+No composite Firestore indexes are required for the app queries. A single-field equality query on `users.authEmail`, `users.email`, and the `profile` collection group `email` is used only for the one-time legacy copy.
+
+### Legacy Clerk data
+
+Older accounts live at `users/{clerkUserId}`. Those root documents store the address in `authEmail`. Profile documents at `users/{clerkUserId}/profile/{id}` store it in `email`. There is no separate field named only for Clerk.
+
+On the first server session for a Firebase uid, if `users/{firebaseUid}` does not exist yet, the server looks for exactly one other user document whose `authEmail`, `email`, or profile `email` equals the Firebase user's verified email. When that document exists, its data and subcollections (`profile`, `payments`, `talkingPhotos`, and nested `videos`) are copied to `users/{firebaseUid}`. The source documents are not deleted. The copied root document records `legacySourceId`.
+
+The copy does not run when:
+
+- the Firebase email is missing or not verified (email/password accounts are unverified until the user confirms the address, and the app then creates `users/{firebaseUid}`, so a later verification does not copy);
+- no legacy document has `authEmail`, `email`, or a profile `email`;
+- more than one legacy document matches the address.
+
+Documents with none of those email fields are left in place.
 
 Register `POST /api/stripe/webhook` for `payment_intent.succeeded` when `STRIPE_WEBHOOK_SECRET` is set.
 
 ## Deployment
 
-Set the env var names above in the host. Do not put secrets in the workflow file. In production, protected routes stay closed unless Clerk is configured.
+Set the env var names above in the host. Do not put secrets in the workflow file. In production, protected routes return 401 unless the request carries a verified Firebase ID token. Enable Email/Password and Google in Firebase Authentication, and authorize the app domain for Google sign-in. This repo does not deploy those provider settings.
 
 ## Contributing
 

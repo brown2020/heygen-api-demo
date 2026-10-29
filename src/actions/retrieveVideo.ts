@@ -1,7 +1,6 @@
 "use server";
 
 import axios from "axios";
-import { auth } from "@clerk/nextjs/server";
 import { axiosErrorSummary } from "@/libs/axios-error";
 import { mapHeygenVideoStatus } from "@/libs/heygen-response";
 import { assertSafeHeygenAssetUrl, MAX_VIDEO_DOWNLOAD_BYTES } from "@/libs/safe-url";
@@ -9,6 +8,7 @@ import { assertSafeStorageId } from "@/libs/storage-id";
 import { SIGNED_URL_TTL_MS } from "@/libs/video-poll";
 import { getAdminServices } from "@/firebase/firebaseAdmin";
 import { getUserHeygenApiKey } from "@/server/heygen-user";
+import { requireUser } from "@/server/verify-id-token";
 
 interface RetrieveVideoResponse {
   status: "processing" | "completed" | "failed" | "pending";
@@ -30,8 +30,7 @@ export async function retrieveVideo(
   videoId: string,
   talkingPhotoId: string
 ): Promise<RetrieveVideoResponse | null> {
-  const { userId } = await auth();
-  if (!userId) throw new Error("Unauthorized");
+  const { uid: userId } = await requireUser();
 
   let safeVideoId: string;
   let safePhotoId: string;
