@@ -5,7 +5,7 @@ Punchlist after the dependency maintenance pass. Items here are not implemented.
 ## Next steps
 
 1. Deploy `firestore.rules`, `storage.rules`, and `cors.json` to the Firebase project. The app now reads and writes `users/{uid}/talkingPhotos` and `videos/{uid}/...`. Those paths stay denied until the rules are deployed.
-2. Enable Email/Password and Google in Firebase Authentication and authorize the production domain. Rules compare `request.auth.uid` to `users/{firebaseUid}`. Legacy documents are copied only on the first verified sign-in; see the README.
+2. Enable Email/Password and Google in Firebase Authentication and authorize the production domain. Rules compare `request.auth.uid` to `users/{firebaseUid}`. Existing Clerk user documents are left untouched.
 3. Register the Stripe webhook for `payment_intent.succeeded` at `/api/stripe/webhook` and set `STRIPE_WEBHOOK_SECRET` in the host. Until then, only the signed-in success page grants the pack.
 4. Re-fetch talking photos after the rules deploy. Documents left in the old root `talkingPhotos` collection are not migrated and are not read.
 5. CI runs on Node 24. `firebase` 13 still declares Node >= 24.12.0. Confirm the Vercel project runtime matches.

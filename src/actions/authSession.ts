@@ -1,7 +1,6 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { migrateLegacyUserIfNeeded } from "@/server/migrate-legacy-user";
 import {
   FIREBASE_ID_TOKEN_COOKIE,
   verifyFirebaseIdToken,
@@ -22,14 +21,6 @@ export async function establishAuthSession(idToken: string): Promise<{ uid: stri
     path: "/",
     maxAge: COOKIE_MAX_AGE_SECONDS,
   });
-  try {
-    await migrateLegacyUserIfNeeded(user);
-  } catch (error) {
-    console.error(
-      "Legacy user copy failed:",
-      error instanceof Error ? error.message : "unknown error"
-    );
-  }
   return { uid: user.uid };
 }
 

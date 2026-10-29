@@ -31,10 +31,9 @@ A signed-in user connects their own HeyGen API key, syncs that account's talking
 
 1. The home page offers email/password sign-in, email/password sign-up, and Google sign-in (`signInWithPopup`). The header shows a user menu with sign-out when a session exists.
 2. After sign-in, the client sends the Firebase ID token to `establishAuthSession`. The server verifies it with `firebase-admin` `verifyIdToken` and stores it in an httpOnly cookie. Later server actions read that cookie and verify it again. The uid from the token is the user id.
-3. Firestore paths and security rules use that Firebase Auth uid (`request.auth.uid == userId`).
-4. If `users/{firebaseUid}` does not exist and the token email is verified, the server copies at most one legacy `users/{clerkUserId}` tree with a matching `authEmail`, root `email`, or profile `email`. It never deletes the old documents. Unverified emails, documents with no email field, and ambiguous matches are skipped.
-5. If the session cookie cannot be created, the app keeps the Firebase user and sets an auth error.
-6. The browser never writes `isAdmin`, `premium`, or `credits`.
+3. Firestore paths and security rules use that Firebase Auth uid (`request.auth.uid == userId`). Existing Clerk user documents are left untouched and are not copied.
+4. If the session cookie cannot be created, the app keeps the Firebase user and sets an auth error.
+5. The browser never writes `isAdmin`, `premium`, or `credits`.
 
 ## Profile
 

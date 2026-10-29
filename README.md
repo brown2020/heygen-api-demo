@@ -126,21 +126,7 @@ Deploy from the Firebase console or CLI. This repo does not deploy them.
 - `storage.rules` — the owner can read `videos/{userId}/**`. Writes are Admin-only.
 - `cors.json` — GET from localhost and the production Vercel host. Apply it to the bucket separately if you use it.
 
-No composite Firestore indexes are required for the app queries. A single-field equality query on `users.authEmail`, `users.email`, and the `profile` collection group `email` is used only for the one-time legacy copy.
-
-### Legacy Clerk data
-
-Older accounts live at `users/{clerkUserId}`. Those root documents store the address in `authEmail`. Profile documents at `users/{clerkUserId}/profile/{id}` store it in `email`. There is no separate field named only for Clerk.
-
-On the first server session for a Firebase uid, if `users/{firebaseUid}` does not exist yet, the server looks for exactly one other user document whose `authEmail`, `email`, or profile `email` equals the Firebase user's verified email. When that document exists, its data and subcollections (`profile`, `payments`, `talkingPhotos`, and nested `videos`) are copied to `users/{firebaseUid}`. The source documents are not deleted. The copied root document records `legacySourceId`.
-
-The copy does not run when:
-
-- the Firebase email is missing or not verified (email/password accounts are unverified until the user confirms the address, and the app then creates `users/{firebaseUid}`, so a later verification does not copy);
-- no legacy document has `authEmail`, `email`, or a profile `email`;
-- more than one legacy document matches the address.
-
-Documents with none of those email fields are left in place.
+No composite Firestore indexes are required. Existing Clerk user documents are left untouched and are not copied.
 
 Register `POST /api/stripe/webhook` for `payment_intent.succeeded` when `STRIPE_WEBHOOK_SECRET` is set.
 
