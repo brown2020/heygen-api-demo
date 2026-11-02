@@ -19,7 +19,7 @@ Punchlist after the dependency maintenance pass. Items here are not implemented.
 - A profile that has never been created has 0 credits, so the first generate click can fail until the profile document exists. Opening the app while signed in creates it with the 1000-credit starter balance.
 - `FIREBASE_TYPE`, `FIREBASE_PRIVATE_KEY_ID`, `FIREBASE_CLIENT_ID`, `FIREBASE_AUTH_URI`, `FIREBASE_TOKEN_URI`, `FIREBASE_AUTH_PROVIDER_X509_CERT_URL`, `FIREBASE_CLIENT_CERTS_URL`, and `FIREBASE_UNIVERSE_DOMAIN` are in `.env.example` and are not read by Admin init.
 - The ElevenLabs API key is collected and stored, and nothing calls ElevenLabs.
-- `glob@10.5.0`, pulled in by `firebase-admin` through `rimraf`, is deprecated. `npm audit` reports no advisory. It was left in place so Admin's dependency tree stays intact.
+- `glob` is overridden to >=14.0.3 (the AbortSignal advisory, GHSA-3g3m-2fjr-6pw4, is fixed in 14.0.2). `rimraf` 5 from `firebase-admin` still loads. `minimatch` 3.1.5 inside `eslint-plugin-import`, `eslint-plugin-jsx-a11y`, and `eslint-plugin-react` remains. Those plugins call the minimatch 3 function export, and minimatch >=11.0.1 removes it. `npm audit` still reports that moderate advisory. `npm audit fix --force` would install `eslint-config-next` 0.2.4, which is not usable here.
 
 ## Open issues
 
