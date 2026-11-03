@@ -1,5 +1,6 @@
 "use server";
 
+import { sampleListItem } from "@/libs/heygen-demo";
 import { assertSafeStorageId } from "@/libs/storage-id";
 import { SIGNED_URL_TTL_MS } from "@/libs/video-poll";
 import { getAdminServices } from "@/firebase/firebaseAdmin";
@@ -8,6 +9,8 @@ import { requireUser } from "@/server/verify-id-token";
 export type ListedVideo = {
   id: string;
   videoUrl: string;
+  demo?: boolean;
+  notice?: string;
 };
 
 export async function listTalkingPhotoVideos(talkingPhotoId: string): Promise<ListedVideo[]> {
@@ -24,6 +27,11 @@ export async function listTalkingPhotoVideos(talkingPhotoId: string): Promise<Li
 
   const videos: ListedVideo[] = [];
   for (const doc of snap.docs) {
+    const sample = sampleListItem(doc.id, doc.data() as Record<string, unknown>);
+    if (sample) {
+      videos.push(sample);
+      continue;
+    }
     const storagePath = doc.get("storage_path");
     if (
       typeof storagePath !== "string" ||

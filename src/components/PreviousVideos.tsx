@@ -49,7 +49,13 @@ export default function PreviousVideos({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {videos.map((video) => (
             <div key={video.id} className="border p-4 rounded-md shadow-sm">
+              {video.demo && (
+                <p className="mb-2 text-sm font-medium text-amber-900">Sample video</p>
+              )}
               <video controls src={video.videoUrl} className="w-full rounded-sm"></video>
+              {video.demo && video.notice && (
+                <p className="mt-2 text-sm text-amber-950">{video.notice}</p>
+              )}
             </div>
           ))}
         </div>

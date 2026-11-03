@@ -53,14 +53,14 @@ Document: `users/{uid}/profile/userData`.
 
 ## Video generation
 
-1. The user selects a talking photo and optionally enters a script and an audio URL.
-2. The server debits 1 credit in a transaction. A balance below 1 fails before HeyGen is called.
-3. HeyGen `POST /v2/video/generate` runs with the user's key. `HEYGEN_USE_FIXTURES=true` sets HeyGen's `test` flag.
-4. If HeyGen does not accept the job, the 1 credit is refunded.
-5. The browser polls `retrieveVideo` every 4 seconds for up to 10 minutes. Each call checks HeyGen status once.
-6. On completion, the server downloads the file only from `https://files.heygen.ai`, `files2.heygen.ai`, `resource.heygen.ai`, or `resource2.heygen.ai`, with redirects disabled and a 100 MiB cap.
-7. The file is stored at `videos/{uid}/{talkingPhotoId}/{videoId}.mp4`. A 15-minute signed read URL is returned for playback. Firestore stores `storage_path`, not a long-lived URL.
-8. Previous videos are listed by a server action that signs the same path again.
+1. The user selects a talking photo and optionally enters a script and an audio URL. With no HeyGen key saved, the gallery includes a built-in sample talking photo (`demo-sample-avatar`) so Generate can run. That card is not written to Firestore.
+2. If the profile key is missing, the server does not debit a credit. It returns a sample video id and the bundled file `/demo/sample-talking-avatar.mp4`.
+3. If a key is saved, the server debits 1 credit, then calls HeyGen `POST /v2/video/generate`. `HEYGEN_USE_FIXTURES=true` sets HeyGen's `test` flag. A balance below 1 fails before HeyGen is called and does not use the sample.
+4. If HeyGen accepts the job, the video id is returned and the credit stays spent. If HeyGen returns an auth, quota, credit, network, or other 4xx/5xx error, or no video id, the credit is refunded and the sample is used instead. Errors shown in the UI are sentences, never `{}`.
+5. The browser polls `retrieveVideo` every 4 seconds for up to 10 minutes. A sample id completes on the first call and does not contact HeyGen. A live id checks HeyGen status once per call.
+6. On a live completion, the server downloads the file only from `https://files.heygen.ai`, `files2.heygen.ai`, `resource.heygen.ai`, or `resource2.heygen.ai`, with redirects disabled and a 100 MiB cap.
+7. A live file is stored at `videos/{uid}/{talkingPhotoId}/{videoId}.mp4`. A 15-minute signed read URL is returned for playback. Firestore stores `storage_path`, not a long-lived URL. A sample stores `demo_mode`, the public `/demo/sample-talking-avatar.mp4` path, and a demo notice on the same video document.
+8. Previous videos are listed by a server action. Live rows are signed again. Sample rows play the bundled file and are labeled as a sample.
 
 Voice selection: an audio URL uses HeyGen's audio voice; otherwise a script plus voice id uses text; otherwise the clip is 10 seconds of silence. A missing or known-invalid voice id is replaced with the built-in fallback voice id.
 

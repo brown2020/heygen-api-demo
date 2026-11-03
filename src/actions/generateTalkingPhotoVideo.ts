@@ -2,20 +2,54 @@
 
 import axios from "axios";
 import { axiosErrorSummary } from "@/libs/axios-error";
+import {
+  createSampleVideoId,
+  demoSample,
+  heygenFailureReason,
+  readableError,
+  readableText,
+  type HeygenDemoReason,
+} from "@/libs/heygen-demo";
 import { assertSafeStorageId } from "@/libs/storage-id";
 import { debitGenerationCredit, refundGenerationCredit } from "@/server/billing";
-import { getUserHeygenApiKey } from "@/server/heygen-user";
+import {
+  getUserHeygenApiKey,
+  MISSING_HEYGEN_KEY_MESSAGE,
+} from "@/server/heygen-user";
 import { requireUser } from "@/server/verify-id-token";
 
 interface GenerateVideoResponse {
   video_id: string;
   error?: string;
+  demo?: boolean;
+  notice?: string;
+  video_url?: string;
 }
 
 type VoiceSettings =
   | { type: "audio"; audio_url: string }
   | { type: "text"; voice_id: string; input_text: string }
   | { type: "silence"; duration: number };
+
+function sampleResponse(reason: HeygenDemoReason): GenerateVideoResponse {
+  const sample = demoSample(reason);
+  return {
+    video_id: createSampleVideoId(reason),
+    demo: true,
+    notice: sample.notice,
+    video_url: sample.videoUrl,
+  };
+}
+
+function heygenBodyText(data: unknown, fallback: string): string {
+  if (typeof data === "string") return data;
+  if (data == null) return fallback;
+  try {
+    return JSON.stringify(data);
+  } catch {
+    return fallback;
+  }
+}
 
 export async function generateTalkingPhotoVideo(
   talkingPhotoId: string,
@@ -31,18 +65,29 @@ export async function generateTalkingPhotoVideo(
   } catch (error) {
     return {
       video_id: "",
-      error: error instanceof Error ? error.message : "Talking photo id is invalid",
+      error: readableError(error, "Talking photo id is invalid"),
     };
   }
 
   let apiKey: string;
   try {
     apiKey = await getUserHeygenApiKey(userId);
+  } catch (error) {
+    if (error instanceof Error && error.message === MISSING_HEYGEN_KEY_MESSAGE) {
+      return sampleResponse("missing_key");
+    }
+    return {
+      video_id: "",
+      error: readableError(error, "Could not read the HeyGen API key"),
+    };
+  }
+
+  try {
     await debitGenerationCredit(userId);
   } catch (error) {
     return {
       video_id: "",
-      error: error instanceof Error ? error.message : "Could not start generation",
+      error: readableError(error, "Not enough credits"),
     };
   }
 
@@ -95,28 +140,32 @@ export async function generateTalkingPhotoVideo(
       await refundGenerationCredit(userId);
     } catch (refundError) {
       console.error("Credit refund failed:", axiosErrorSummary(refundError));
-    }
-
-    if (error instanceof Error && error.message === "NO_VIDEO_ID") {
       return {
         video_id: "",
-        error: "Failed to retrieve video ID. Please try again.",
+        error: readableError(refundError, "Could not refund the credit after HeyGen failed"),
       };
+    }
+
+    const fallback = axios.isAxiosError(error)
+      ? heygenFailureReason({
+          status: error.response?.status,
+          bodyText: heygenBodyText(error.response?.data, error.message),
+          network: !error.response,
+        })
+      : error instanceof Error && error.message === "NO_VIDEO_ID"
+        ? heygenFailureReason({ network: true })
+        : null;
+
+    if (fallback) {
+      console.error("HeyGen generate failed; using sample video:", axiosErrorSummary(error));
+      return sampleResponse(fallback);
     }
 
     if (axios.isAxiosError(error)) {
       console.error("HeyGen generate failed:", axiosErrorSummary(error));
-      const statusCode = error.response?.status;
-      if (statusCode === 429) {
-        return {
-          video_id: "",
-          error: "Rate limit exceeded. Please try again later.",
-        };
-      }
       const apiErrorMessage =
-        (typeof error.response?.data?.error?.message === "string" &&
-          error.response.data.error.message) ||
-        (typeof error.response?.data?.message === "string" && error.response.data.message) ||
+        readableText(error.response?.data?.error?.message) ||
+        readableText(error.response?.data?.message) ||
         "HeyGen request failed";
       return {
         video_id: "",
@@ -127,7 +176,7 @@ export async function generateTalkingPhotoVideo(
     console.error("Unexpected generate error:", axiosErrorSummary(error));
     return {
       video_id: "",
-      error: "An error occurred while generating the video. Please try again.",
+      error: readableError(error, "An error occurred while generating the video. Please try again."),
     };
   }
 }

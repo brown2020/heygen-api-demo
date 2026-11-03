@@ -10,6 +10,7 @@ import { HeartIcon } from "lucide-react";
 import useProfileStore from "@/zustand/useProfileStore";
 import { TalkingPhoto } from "@/types/heygen";
 import AvatarCardFields from "@/components/AvatarCardFields";
+import { isDemoTalkingPhotoId } from "@/libs/heygen-demo";
 
 interface AvatarCardProps {
   id: string;
@@ -49,7 +50,7 @@ export default function AvatarCard({ id, talkingPhoto }: AvatarCardProps) {
   const isOnGeneratePage = pathname === "/generate";
 
   useEffect(() => {
-    if (talkingPhoto || !isFirebaseConfigured) return;
+    if (talkingPhoto || !isFirebaseConfigured || isDemoTalkingPhotoId(id)) return;
     let cancelled = false;
 
     if (!uid) return;
@@ -71,6 +72,7 @@ export default function AvatarCard({ id, talkingPhoto }: AvatarCardProps) {
     };
   }, [id, talkingPhoto, uid]);
 
+  const isDemo = isDemoTalkingPhotoId(id);
   const source = talkingPhoto ?? fetchedTalkingPhoto;
   const favorite = favoriteOverride ?? source?.favorite ?? false;
   const displayed = useMemo(
@@ -80,7 +82,7 @@ export default function AvatarCard({ id, talkingPhoto }: AvatarCardProps) {
   const previewImageUrl = source?.preview_image_url || "";
 
   const toggleFavorite = async () => {
-    if (!isFirebaseConfigured) return;
+    if (isDemo || !isFirebaseConfigured) return;
     const next = !favorite;
     setFavoriteOverride(next);
     if (!uid) return;
@@ -95,7 +97,7 @@ export default function AvatarCard({ id, talkingPhoto }: AvatarCardProps) {
     };
 
   const saveDetails = async () => {
-    if (!isFirebaseConfigured) return;
+    if (isDemo || !isFirebaseConfigured) return;
     if (!uid) return;
     await setDoc(
       doc(db, "users", uid, "talkingPhotos", id),
@@ -126,6 +128,7 @@ export default function AvatarCard({ id, talkingPhoto }: AvatarCardProps) {
       <div className="flex justify-between items-center">
         <h3 className="font-bold mb-2">
           {displayed.talkingPhotoName || "Untitled Talking Photo"}
+          {isDemo ? " (sample)" : ""}
         </h3>
         <button
           type="button"

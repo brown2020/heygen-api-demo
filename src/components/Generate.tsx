@@ -9,6 +9,13 @@ import { generateTalkingPhotoVideo } from "@/actions/generateTalkingPhotoVideo";
 import { retrieveVideo } from "@/actions/retrieveVideo";
 import { useAuthStore } from "@/zustand/useAuthStore";
 import { isWithinPollDeadline, VIDEO_POLL_INTERVAL_MS } from "@/libs/video-poll";
+import {
+  builtinDemoTalkingPhoto,
+  isDemoTalkingPhotoId,
+  profileHasHeygenKey,
+  readableError,
+} from "@/libs/heygen-demo";
+import { DemoModeNotice } from "@/components/DemoModeNotice";
 import AvatarCard from "@/components/AvatarCard";
 import { PulseLoader } from "react-spinners";
 import PreviousVideos from "@/components/PreviousVideos";
@@ -26,12 +33,30 @@ export default function Generate() {
   const [script, setScript] = useState<string>("");
   const [audioUrl, setAudioUrl] = useState<string>("");
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [demoNotice, setDemoNotice] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     const selectedId = profile.selectedTalkingPhoto;
+    const showDemo =
+      isDemoTalkingPhotoId(selectedId) ||
+      (!profileHasHeygenKey(profile.heygen_api_key) && !selectedId);
+
+    if (showDemo) {
+      queueMicrotask(() => {
+        if (!cancelled) {
+          setItemDetails(builtinDemoTalkingPhoto());
+          setMissingSelection(false);
+          setError(null);
+          setLoading(false);
+        }
+      });
+      return () => {
+        cancelled = true;
+      };
+    }
 
     if (!selectedId) {
       queueMicrotask(() => {
@@ -104,22 +129,26 @@ export default function Generate() {
     return () => {
       cancelled = true;
     };
-  }, [profile.selectedTalkingPhoto, uid]);
+  }, [profile.heygen_api_key, profile.selectedTalkingPhoto, uid]);
 
   const handleGenerate = async () => {
-    if (!profile.selectedTalkingPhoto) {
+    const voiceId = resolveVoiceId(itemDetails?.voiceId);
+
+    const photoId =
+      profile.selectedTalkingPhoto ||
+      (profileHasHeygenKey(profile.heygen_api_key) ? "" : builtinDemoTalkingPhoto().talking_photo_id);
+    if (!photoId) {
       setError("No selected talking photo.");
       return;
     }
 
-    const voiceId = resolveVoiceId(itemDetails?.voiceId);
-
     setIsGenerating(true);
     setError(null);
+    setDemoNotice(null);
 
     try {
       const result = await generateTalkingPhotoVideo(
-        profile.selectedTalkingPhoto,
+        photoId,
         voiceId,
         script || undefined,
         audioUrl || undefined
@@ -127,10 +156,7 @@ export default function Generate() {
 
       if (result && result.video_id) {
         const started = Date.now();
-        let statusResponse = await retrieveVideo(
-          result.video_id,
-          profile.selectedTalkingPhoto
-        );
+        let statusResponse = await retrieveVideo(result.video_id, photoId);
         while (
           statusResponse &&
           statusResponse.status !== "completed" &&
@@ -138,24 +164,31 @@ export default function Generate() {
           isWithinPollDeadline(Date.now() - started)
         ) {
           await new Promise((resolve) => setTimeout(resolve, VIDEO_POLL_INTERVAL_MS));
-          statusResponse = await retrieveVideo(
-            result.video_id,
-            profile.selectedTalkingPhoto
-          );
+          statusResponse = await retrieveVideo(result.video_id, photoId);
         }
 
         if (statusResponse && statusResponse.status === "completed") {
-          setVideoUrl(statusResponse.video_url ?? null);
+          setVideoUrl(statusResponse.video_url ?? result.video_url ?? null);
+          setDemoNotice(statusResponse.notice ?? result.notice ?? null);
+        } else if (result.demo && result.video_url) {
+          setVideoUrl(result.video_url);
+          setDemoNotice(result.notice ?? null);
+          setError(
+            readableError(
+              statusResponse?.error,
+              "The sample video is ready, but it could not be saved to your list."
+            )
+          );
         } else if (statusResponse && statusResponse.status === "failed") {
-          setError(statusResponse.error || "Video generation failed.");
+          setError(readableError(statusResponse.error, "Video generation failed."));
         } else {
           setError("Video is still processing. Open this page again in a few minutes.");
         }
       } else {
-        setError(result?.error || "Failed to generate video.");
+        setError(readableError(result?.error, "Failed to generate video."));
       }
-    } catch {
-      setError("An error occurred while generating the video.");
+    } catch (error) {
+      setError(readableError(error, "An error occurred while generating the video."));
     } finally {
       setIsGenerating(false);
     }
@@ -165,7 +198,7 @@ export default function Generate() {
     return <div role="status">Loading...</div>;
   }
 
-  if (missingSelection || !itemDetails || !profile.selectedTalkingPhoto) {
+  if (missingSelection || !itemDetails) {
     return (
       <div className="flex flex-col gap-4 max-w-lg">
         <h2 className="text-2xl font-bold">Generate</h2>
@@ -189,7 +222,7 @@ export default function Generate() {
       <div className="flex flex-col md:flex-row gap-4">
         <div className="mr-auto mb-4">
           <AvatarCard
-            id={profile.selectedTalkingPhoto}
+            id={itemDetails.talking_photo_id}
             talkingPhoto={itemDetails}
           />
         </div>
@@ -229,7 +262,7 @@ export default function Generate() {
               "Generate Video"
             )}
           </button>
-          {error && (
+          {error && error !== "{}" && (
             <div className="text-red-500 mt-2" role="alert">
               {error}
             </div>
@@ -239,15 +272,20 @@ export default function Generate() {
 
       {videoUrl && (
         <div className="mt-8">
-          <h3 className="text-lg font-bold mb-4">Generated Video</h3>
+          <h3 className="text-lg font-bold mb-4">
+            {demoNotice ? "Sample video" : "Generated Video"}
+          </h3>
+          {demoNotice && <DemoModeNotice notice={demoNotice} />}
           <video controls src={videoUrl} className="w-full rounded-sm"></video>
         </div>
       )}
 
-      <PreviousVideos
-        talkingPhotoId={profile.selectedTalkingPhoto}
-        refreshToken={videoUrl}
-      />
+      {uid && (
+        <PreviousVideos
+          talkingPhotoId={profile.selectedTalkingPhoto || itemDetails.talking_photo_id}
+          refreshToken={videoUrl}
+        />
+      )}
     </div>
   );
 }

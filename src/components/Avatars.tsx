@@ -9,6 +9,7 @@ import { ClipLoader } from "react-spinners";
 import { db, isFirebaseConfigured } from "@/firebase/firebaseClient";
 import { collection, onSnapshot, setDoc, doc } from "firebase/firestore";
 import { useAuthStore } from "@/zustand/useAuthStore";
+import { readableError, withBuiltinDemoTalkingPhoto } from "@/libs/heygen-demo";
 import { assertSafeStorageId } from "@/libs/storage-id";
 
 export default function Avatars() {
@@ -86,15 +87,19 @@ export default function Avatars() {
       }
     } catch (err) {
       console.error(err);
-      setError("Failed to fetch talking photos");
+      setError(readableError(err, "Failed to fetch talking photos"));
     } finally {
       setIsLoading(false);
     }
   };
 
+  const gallery = withBuiltinDemoTalkingPhoto(
+    talkingPhotos,
+    Boolean(profile.heygen_api_key?.trim())
+  );
   const filteredTalkingPhotos = showFavorites
-    ? talkingPhotos.filter((p) => p.favorite)
-    : talkingPhotos;
+    ? gallery.filter((p) => p.favorite)
+    : gallery;
 
   return (
     <div>

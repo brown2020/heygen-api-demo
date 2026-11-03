@@ -15,7 +15,7 @@ Punchlist after the dependency maintenance pass. Items here are not implemented.
 - Preview images render with `next/image` only for `files2.heygen.ai` (plus Firebase and Google). Another HeyGen image host throws at render time. The repo does not contain a sample URL on a different host, so the allowlist was not widened.
 - Completed-video downloads allow only `files.heygen.ai`, `files2.heygen.ai`, `resource.heygen.ai`, and `resource2.heygen.ai`. A HeyGen CDN host outside that list fails the download after the credit has already been debited.
 - The optional audio URL is forwarded to HeyGen as-is. This server does not fetch it.
-- Video status polling holds the browser tab for up to 10 minutes. There is no background job if the tab closes after HeyGen accepts the job. The 1 credit stays spent once HeyGen returns a video id.
+- Video status polling holds the browser tab for up to 10 minutes. There is no background job if the tab closes after HeyGen accepts the job. The 1 credit stays spent once HeyGen returns a video id. A missing key or a failed HeyGen call uses the bundled sample instead, does not keep a credit charge, and the first status call returns completed.
 - A profile that has never been created has 0 credits, so the first generate click can fail until the profile document exists. Opening the app while signed in creates it with the 1000-credit starter balance.
 - `FIREBASE_TYPE`, `FIREBASE_PRIVATE_KEY_ID`, `FIREBASE_CLIENT_ID`, `FIREBASE_AUTH_URI`, `FIREBASE_TOKEN_URI`, `FIREBASE_AUTH_PROVIDER_X509_CERT_URL`, `FIREBASE_CLIENT_CERTS_URL`, and `FIREBASE_UNIVERSE_DOMAIN` are in `.env.example` and are not read by Admin init.
 - The ElevenLabs API key is collected and stored, and nothing calls ElevenLabs.

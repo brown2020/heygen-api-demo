@@ -2,6 +2,12 @@
 
 import axios from "axios";
 import { axiosErrorSummary } from "@/libs/axios-error";
+import {
+  demoSample,
+  isSampleVideoId,
+  readableError,
+  sampleReasonFromVideoId,
+} from "@/libs/heygen-demo";
 import { mapHeygenVideoStatus } from "@/libs/heygen-response";
 import { assertSafeHeygenAssetUrl, MAX_VIDEO_DOWNLOAD_BYTES } from "@/libs/safe-url";
 import { assertSafeStorageId } from "@/libs/storage-id";
@@ -15,6 +21,8 @@ interface RetrieveVideoResponse {
   video_url?: string;
   thumbnail_url?: string;
   error?: string;
+  demo?: boolean;
+  notice?: string;
 }
 
 function safeThumbnail(value: string | undefined): string | null {
@@ -40,7 +48,25 @@ export async function retrieveVideo(
   } catch (error) {
     return {
       status: "failed",
-      error: error instanceof Error ? error.message : "Invalid id",
+      error: readableError(error, "Invalid id"),
+    };
+  }
+
+  if (isSampleVideoId(safeVideoId)) {
+    const sample = demoSample(sampleReasonFromVideoId(safeVideoId) ?? "upstream");
+    try {
+      await dbSample(userId, safePhotoId, safeVideoId, sample.notice, sample.videoUrl);
+    } catch (error) {
+      console.error(
+        "Sample video list save failed:",
+        readableError(error, "Could not save the sample video")
+      );
+    }
+    return {
+      status: "completed",
+      video_url: sample.videoUrl,
+      demo: true,
+      notice: sample.notice,
     };
   }
 
@@ -53,7 +79,7 @@ export async function retrieveVideo(
   } catch (error) {
     return {
       status: "failed",
-      error: error instanceof Error ? error.message : "Server is not configured",
+      error: readableError(error, "Server is not configured"),
     };
   }
 
@@ -125,8 +151,34 @@ export async function retrieveVideo(
   } catch (error) {
     console.error("Error fetching video status:", axiosErrorSummary(error));
     if (error instanceof Error && /video url|maxContentLength|maxBodyLength/i.test(error.message)) {
-      return { status: "failed", error: error.message };
+      return {
+        status: "failed",
+        error: readableError(error, "The video could not be downloaded."),
+      };
     }
     return { status: "processing" };
   }
+}
+
+async function dbSample(
+  userId: string,
+  photoId: string,
+  videoId: string,
+  notice: string,
+  videoUrl: string
+): Promise<void> {
+  const { db } = getAdminServices();
+  await db
+    .collection("users")
+    .doc(userId)
+    .collection("talkingPhotos")
+    .doc(photoId)
+    .collection("videos")
+    .doc(videoId)
+    .set({
+      demo_mode: true,
+      video_url: videoUrl,
+      notice,
+      created_at: new Date(),
+    });
 }

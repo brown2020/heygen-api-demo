@@ -8,7 +8,7 @@ Next.js app that generates talking-photo videos with the [HeyGen](https://www.he
 - Firestore paths and security rules use the Firebase Auth uid.
 - Per-user HeyGen API key, read on the server for generate, status, and avatar sync.
 - Talking photos and videos stored under that user. Playback URLs last 15 minutes.
-- Browser polling of video status (the server checks HeyGen once per call).
+- Browser polling of video status (the server checks HeyGen once per call). If the profile has no HeyGen key, or HeyGen returns an auth, quota, or other 4xx/5xx error, the app plays `public/demo/sample-talking-avatar.mp4`, labels it as a sample, saves that row on the user's video list, and does not charge a credit. Sample status resolves on the first poll.
 - Stripe credit pack at a fixed price. Credits are granted only by the Admin SDK.
 - Optional Stripe webhook. If its secret is unset, the webhook route returns 503 and the signed-in success page still grants the pack.
 
