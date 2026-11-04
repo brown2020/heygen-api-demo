@@ -59,6 +59,7 @@ export default function PaymentSuccessPage({ payment_intent }: Props) {
         );
         if (!cancelled) {
           queueMicrotask(() => {
+            if (cancelled) return;
             setMessage(
               error instanceof Error ? error.message : "Error handling payment success"
             );

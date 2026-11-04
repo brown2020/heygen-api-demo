@@ -25,26 +25,25 @@ export async function listTalkingPhotoVideos(talkingPhotoId: string): Promise<Li
     .collection("videos")
     .get();
 
-  const videos: ListedVideo[] = [];
-  for (const doc of snap.docs) {
-    const sample = sampleListItem(doc.id, doc.data() as Record<string, unknown>);
-    if (sample) {
-      videos.push(sample);
-      continue;
-    }
-    const storagePath = doc.get("storage_path");
-    if (
-      typeof storagePath !== "string" ||
-      !storagePath.startsWith(`videos/${userId}/`) ||
-      storagePath.includes("..")
-    ) {
-      continue;
-    }
-    const [videoUrl] = await bucket.file(storagePath).getSignedUrl({
-      action: "read",
-      expires: Date.now() + SIGNED_URL_TTL_MS,
-    });
-    videos.push({ id: doc.id, videoUrl });
-  }
-  return videos;
+  const expires = Date.now() + SIGNED_URL_TTL_MS;
+  const listed = await Promise.all(
+    snap.docs.map(async (doc) => {
+      const sample = sampleListItem(doc.id, doc.data() as Record<string, unknown>);
+      if (sample) return sample;
+      const storagePath = doc.get("storage_path");
+      if (
+        typeof storagePath !== "string" ||
+        !storagePath.startsWith(`videos/${userId}/`) ||
+        storagePath.includes("..")
+      ) {
+        return null;
+      }
+      const [videoUrl] = await bucket.file(storagePath).getSignedUrl({
+        action: "read",
+        expires,
+      });
+      return { id: doc.id, videoUrl };
+    })
+  );
+  return listed.filter((video): video is ListedVideo => video !== null);
 }

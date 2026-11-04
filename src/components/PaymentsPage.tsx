@@ -20,13 +20,19 @@ export default function PaymentsPage() {
   }, [uid, fetchPayments]);
 
   useEffect(() => {
+    let cancelled = false;
     const next: Record<string, string> = {};
     for (const payment of payments) {
       next[payment.id] = formatUtcDateTime(
         payment.createdAt ? payment.createdAt.toMillis() : null
       );
     }
-    queueMicrotask(() => setFormattedDates(next));
+    queueMicrotask(() => {
+      if (!cancelled) setFormattedDates(next);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [payments]);
 
   return (

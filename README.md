@@ -16,16 +16,16 @@ Next.js app that generates talking-photo videos with the [HeyGen](https://www.he
 
 | Layer | Package |
 | --- | --- |
-| Framework | Next.js 16.4.3 (App Router) |
-| UI | React 19.3.1, Tailwind CSS 4.3.3, Lucide 1.66.0 |
+| Framework | Next.js 16.4.5 (App Router) |
+| UI | React 19.3.1, Tailwind CSS 4.3.4, Lucide 1.68.0 |
 | Language | TypeScript 7.0.2 (`tsc`). ESLint loads the TypeScript 6 API via `typescript` aliased to `@typescript/typescript6` (`tsc6` reports 6.0.3) |
-| Auth | Firebase Auth (`firebase` 13.1.0, verified on the server with `firebase-admin`) |
-| Data | `firebase` 13.1.0, `firebase-admin` 14.5.0 |
-| Payments | `stripe` 23.1.0, `@stripe/stripe-js` 10.2.0, `@stripe/react-stripe-js` 7.0.1 |
+| Auth | Firebase Auth (`firebase` 13.2.0, verified on the server with `firebase-admin`) |
+| Data | `firebase` 13.2.0, `firebase-admin` 14.5.0 |
+| Payments | `stripe` 23.1.0, `@stripe/stripe-js` 10.2.1, `@stripe/react-stripe-js` 7.0.1 |
 | State | Zustand 5.0.16 |
 | HTTP | Axios 1.21.0 |
-| Tests | Vitest 5.0.5, Vite 8.3.5 |
-| Lint | ESLint 10.14.0, `eslint-config-next` 16.4.3 |
+| Tests | Vitest 5.1.0, Vite 8.3.5 |
+| Lint | ESLint 10.14.0, `eslint-config-next` 16.4.5 |
 
 `firebase-admin` 14 / `jwks-rsa` 4 stays on `jose` 5.10.0 through the `jwks-rsa` override. `glob` is overridden to >=14.0.3. `minimatch` 3.1.5 stays inside the ESLint plugins that `eslint-config-next` loads, because those plugins call the minimatch 3 function export.
 
